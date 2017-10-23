@@ -8,11 +8,15 @@ single agent domains, where an agent's reward depends only on its own actions.
 However, several important and interesting problems in communication, robotics
 and gaming involve interactions between multiple agents. In multi-agent
 environments, agents should ideally learn to predict the actions of other
-agents while also taking their own actions. Unfortunately, traditional
+agents while also taking into account their own actions. Unfortunately, traditional
 reinforcement learning approaches such as deep Q-learning struggle to learn in
 these environments, as they have each agent learn an independently optimal
 function. For our course project, we propose employing a new algorithm called
 MADDPG~\cite{lowe2017multi} for centralized multi-agent learning in various
-tasks involving cooperation. Specific examples of tasks where we will use
-MADDPG include coordinating traffic signals, covert communication,
-communication over noisy channel, and etc.
+tasks involving cooperation.
+Specific examples of tasks which we hope to investigate in order of importance:
+\begin{enumerate}
+  \item coordinating traffic signals
+  \item covert communication
+  \item communication over noisy channel
+\end{enumerate}
