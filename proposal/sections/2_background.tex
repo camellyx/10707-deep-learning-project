@@ -1,4 +1,13 @@
 % !TEX root=../proposal.tex
 
 \section{Background}
+\subsection{Evolutionary Algorithms}
+Evolutionary algorithms are randomized algorithm which search through a parameter space using operations such as random mutation and mixing of parameter combinations~\cite{man1996genetic}.
+These sort of algorithms are embarrassingly parallel and can be applied to optimize reinforcement learning parameters.
+This sort of approach, which treats the reinforcement learning problem as a black box, has been used to scale a Mujoco Humanoid problem to 1440 cores~\cite{salimans2017evolution}.
+
+The idea of using these algorithms for RL is that the simplicity of brute force trumps the complexity of other optimizers.
+Evolutionary algorithms have low communication overhead, no backpropagation calculations, high parallelism and an optimization algorithm free of stability issues, and they do this while being competitive in training progress~\cite{salimans2017evolution}.
+Some of the earliest RNNs were trained with random search, where they surpassed backpropagation methods, so this trend has been seen before in the ML community~\cite{hochreiter1997long}.
+
 \label{sec:background}
