@@ -1,7 +1,6 @@
 % !TEX root=../proposal.tex
 
 \section{Background}
-<<<<<<< HEAD
 \label{sec:background}
 
 \subsection{Multi-Agent Reinforcement Learning Problem Setting}
@@ -32,7 +31,86 @@ takes different actions $A_1,\ldots,A_N$, (3)~the state transition function
 depends on the actions of all agents, (4)~each agent may have different goals
 and thus have its own reward functions.
 
+
 \subsection{Q-Learning and Deep Q-Learning}
+
+Q-Learning and Deep Q-Learning (DQN) are popular techniques for single-agent
+reinforcement learning, and can also be applied to solve multi-agent
+reinforcement learning problems. Q-Learning uses a table to estimate the
+optimal action-value function defined by Bellman equation. The table entries
+are updated using stochastic gradient descent that minimizes the objective
+function, i.e., the mean squared error (MSE) between the true action-value
+function and the approximate Q-function.
+\begin{equation}
+J(w) = E_\pi[(q_\pi(S,A) - \hat q(S,A,w))^2]
+\end{equation}
+	
+% The values for each table entry can be updated using
+% dynamic programming, monte carlo methods, or temporal difference (TD) methods.
+% \begin{align*}
+% Q(S_t, A_t) \leftarrow Q(S_t, A_t) +
+% 	\alpha [R_{t+1} + \gamma \max_\alpha Q(S_{t+1}, a) - Q(S_t, A_t)]
+% \end{align*}
+
+However, as the problem becomes complex (i.e., larger state and action
+spaces), the table in traditional Q-Learning becomes too large to update
+efficiently. Thus, DQN is developed to alleviate this problem by using a deep
+neural network to approximate the optimal action-value function. The key idea
+is to minimize the MSE between Q-network and Q-learning targets. The latter is
+approximated by sampling from a replay memory $D$ which contains previous
+state transitions. Each sample is used to update the Q-network parameters
+using stochastic gradient descent to minimize the MSE objective function
+mentioned above.
+\begin{equation}
+L(w) = E_{s,a,r,s'\sim D} [(r + \gamma \max_{a'} Q(s',a',w^-) - Q(s,a,w))^2]
+\end{equation}
+
+Both Q-Learning and DQN can be applied to a multi-agent reinforcement learning
+by having each agent $i$ learn an independently optimal action-value function
+$Q_i$. However, there are two fundamental problems of these techniques that
+limit their capabilities. First, from any agent's point of view, since the
+environment is affected by actions taken by other agents unknown to that
+agent, the state transition function is no longer stationary, violating MDP
+constraint necessary for Q-Learning. Second, for DQN, the experience replay
+memory becomes inaccurate in approximating the state probabilities and state
+transitions for a similar reason.
+
+
+\subsection{Policy Gradient}
+
+Policy Gradient (PG) is another popular technique for single-agent
+reinforcement learning. Instead of approximating the state- or action-value
+function and derive the optimal policy from it (like in DQN), the key idea of
+PG is to directly parameterize the policy and learn the optimal policy
+$\pi_\theta (s,a)$. There are several advantages of Policy Gradient over
+value-based techniques: (1)~Policy Gradient often has better convergence
+properties, (2)~Policy Gradient is effective in high-dimensional or continuous
+action spaces, (3)~Policy Gradient can learn stochastic policies. The
+objective of Policy Gradient is:
+\begin{equation}
+J(\theta) = E_{s\sim p^\pi, a\sim \pi} [\log \pi_\theta (a|s) Q^\pi(s,a)]
+\end{equation}
+
+Different policy gradient methods estimate $Q^\pi$ function differently, for
+example, commonly used Monte-Carlo Policy Gradient (REINFORCE) simply
+simulates the entire episode to obtain the overall return. REINFORCE updates
+the policy function parameters using stochastic gradient descent.
+\begin{equation}
+\theta \leftarrow \theta
+	+ \alpha \gamma^t G_t \nabla_\theta \log \pi (A_t|S_t, \theta)
+\end{equation}
+
+Like many other single-agent techniques, PG can also be applied to a
+multi-agent reinforcement learning problem. However, since the reward of each
+agent can be highly dependent on other agents' actions the variance in the
+policy gradient updates can be large, making it hard to converge to the
+optimal policy and difficult to converge during training.
+
+
+\subsection{Actor Critic}
+
+
+
 
 
 
