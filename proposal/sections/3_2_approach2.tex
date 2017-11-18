@@ -1,7 +1,47 @@
 % !TEX root=../proposal.tex
 
-\section{Approach 2: }
+\section{Multi-Agent Actor Critic for Mixed Cooperative-Competitive Environments}
 \label{sec:direction2}
 
+MADDPG is a recently developed general-purpose multi-agent learning algorithm
+that is a simple extension of actor-critic policy gradient methods where the
+critic is augmented with extra information about the policies of other agents
+while the actor only has access to local information (i.e., its own
+observations). In this framework of centralized training with decentralized
+execution, agents don’t need to access the central critic at test time; they
+learn approximate models of other agents and effectively use them in their own
+policy learning procedure. Furthermore, since the centralized critic is
+learned independently for each agent, this approach can in principle be used
+to model arbitrary reward structures between agents, including adversarial
+cases where the rewards are opposing.
 
+The primary task we plan to apply MADDPG to is learning adaptive strategies
+for coordinating/controlling traffic signals with the aim of increasing
+traffic flow through multiple intersections. Unlike previous attempts that
+employ Q learning to model adaptive traffic policies~\cite{araghi2015traffic},
+we hypothesize that employing a centralized critic to supply agents (traffic
+signals) with information about their peers’ observations (the amount of
+traffic at intersections) and potential actions will lead to more stable
+training and overcome the shortcomings of techniques not naturally suited to
+multi-agent environments.
+
+Furthermore, we will explore communication between multiple agents in the
+presence of noisy channels. In the traffic signal coordination task, one can
+easily imagine situations where communication channels between traffic signals
+(assuming such channels existed in the first place) get corrupted or break. In
+this scenario, agents will have to communicate reliably with one another
+despite their messages being dropped or corrupted randomly. Prior work has
+looked at using linear block error correcting codes designed by experts that
+are then decoded by deep neural networks~\cite{nachmani2016learning,
+nachmani2017rnn}. We plan to build on this work and incorporate it into the
+MADDPG framework to increase the error tolerance.
+
+Finally, we will investigate certain optimizations in training such as
+evolutionary strategies, which have been shown to be competitive in training
+to traditional methods while allowing increased
+parallelism~\cite{salimans2017evolution}.
+Increased parallelism and scalability are important for allowing larger models to be trained~\cite{nair2015massively}.
+We will investigate both algorithmic and computer systems optimizations which may make this a viable training technique.
+Namely, we will investigate how the quantity and quality of updates affect training performance.
+If these methods prove successful, they can be incorporated with other training methods to increase learning scalability.
 
