@@ -2,3 +2,36 @@
 
 \section{Background}
 \label{sec:background}
+
+\subsection{Multi-Agent Reinforcement Learning Problem Setting}
+
+In traditional single-agent reinforcement learning, the problem is set up as a
+\emph{Markov Decision Process} (MDP). In a MDP problem setting, the agent can observe
+a finite set of states $S$, take a finite set of actions $A$, has a state
+transition function $T(s'|s,a) = P(S_{t+1}=s'|S_t=s, A_t=a)$, has a reward
+function $r(s,a) = E[R_{t+1}|S_t=s, A_t=a]$, and a discount factor $\gamma$.
+The state is fully observable to the agent, and the agent can decide a policy
+$\pi(a|s) = P(A_t=a | S_t=s)$ for its next action based on the current state
+$s$.
+
+There are two ways for the agent to decide a good policy that maximizes the
+return (i.e., discounted reward) $G_t = \sum_{k=0}^\infty \gamma^k R_{t+k+1}$.
+First, the agent can estimate the \emph{state-value function} of possible policies
+$v_\pi(s) = E_\pi[G_t|S_t=s]$. Secondly, the agent can alternatively
+estimate the \emph{action-value function} of possible policies
+$q_\pi(s,a) = E_\pi[G_t|S_t=s, A_t=a]$. These functions essentially estimates
+the expected return of a certain policy. To choose the best policy, the agent
+estimates either of these value functions for a range of possible policies and
+pick the one that has the highest value (i.e., expected return).
+
+In multi-agent reinforcement learning, there are multiple agents, which leads
+to several differences: (1)~each agent observes potentially different subsets
+of states $O_1,\ldots,O_N$, which depend on the overall state, (2)~each agent
+takes different actions $A_1,\ldots,A_N$, (3)~the state transition function
+depends on the actions of all agents, (4)~each agent may have different goals
+and thus have its own reward functions.
+
+\subsection{Q-Learning and Deep Q-Learning}
+
+
+
