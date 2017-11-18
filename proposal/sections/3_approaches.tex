@@ -9,7 +9,7 @@ to the continuous action domain. DDPG itself is based on the deterministic
 policy gradient algorithm (DPG)~\cite{silver2014deterministic} which rewrites the gradient
 of the objective $J(\theta)$(Section 2.3) as:
 \begin{equation}
-\nabla_{\theta}J(\theta) = E_{s \sim D} [\nabla_{\theta}\mu_{\theta}(a|s)\nalba_{a} Q^{\mu}(s,a)|_{a = \mu_{\theta}(s)}]
+\nabla_{\theta}J(\theta) = E_{s \sim D} [\nabla_{\theta}\mu_{\theta}(a|s)\nabla_{a} Q^{\mu}(s,a)|_{a = \mu_{\theta}(s)}]
 \end{equation}
 where $\mu_{\theta}: S -> A$ are deterministic policies. DDPG approximates
 both the policy $\mu$ and the critic $Q^{\mu}$ with deep neural networks, sampling
