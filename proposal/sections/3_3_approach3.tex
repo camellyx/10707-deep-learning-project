@@ -1,6 +1,18 @@
 % !TEX root=../proposal.tex
 
 \section{Approach 3: }
+We will use evolutionary techniques to brute force the problems.
+The main idea is to see if the quantity of updates will prevail over the quality over updates.
+We are equipped to solve this problem as we have access to a cluster with over $300$ nodes with $4$ cores per node.
+This yields over $1200$ cores total, which is on the same order of magnitude as the cluster sizes used for state of the art research~\cite{salimans2017evolution}.
+There are many metrics worth considering here, but the main ones will measure learning progress per unit time.
+This is because for every update a traditional algorithm will due, the evolutionary strategy can do thousands.
+
+One avenue worth exploring is whether this sort of problem can be optimized and deployed effectively over GPUs.
+Evolutionary algorithms are embarassingly parallel, but it's not necessarily true that they will run well on GPUs.
+Furter, it’s may be worth investigating how parameter sharing impacts an evolutionary search.
+Sharing parameters decreases the complexity of the learning task, however it increases the required communication required in the system.
+Allowing parameters to grow stale may help counteract some of these negative effects~\cite{cui2014exploiting}.
 \label{sec:direction3}
 
 
