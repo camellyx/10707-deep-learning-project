@@ -2,3 +2,50 @@
 
 \section{Environment and Applications}
 \label{sec:application}
+
+In this project, we use the OpenAI Gym environment, which generates virtually
+infinite amount of data for training and testing our neural network by
+simulating various multi-agent reinforcement learning settings.
+
+A simulated episodic environment takes in an action in each iteration. In
+multi-agent environment, this action is simply an ordered concatenation of
+every agents' actions. In each step, the environment computes the next
+observable state and the immediate reward for each agent, and decide if the
+episode is finished or not. These pieces of information are used by each agent
+to decide the best action in the next step.
+
+We will focus on the following three environments recently developed
+by~\cite{lowe2017multi}.
+
+\begin{enumerate}
+
+\item \textbf{Cooperative communication.} This task consists of two
+cooperative agents, a speaker and a listener, who are placed in an environment
+with three landmarks of differing colors. At each episode, the listener must
+navigate to a landmark of a particular color, and obtains reward based on its
+distance to the correct landmark. However, while the listener can observe the
+relative position and color of the landmarks, it does not know which landmark
+it must navigate to. Conversely, the speaker’s observation consists of the
+correct landmark color, and it can produce a communication output at each time
+step which is observed by the listener. Thus, the speaker must learn to output
+the landmark color based on the motions of the listener.
+
+\item \textbf{Covert communication.} This is an adversarial communication
+environment, where a speaker agent (‘Alice’) must communicate a message to a
+listener agent (‘Bob’), who must reconstruct the message at the other end.
+However, an adversarial agent (‘Eve’) is also observing the channel, and wants
+to reconstruct the message -- Alice and Bob are penalized based on Eve’s
+reconstruction, and thus Alice must encode her message using a randomly
+generated key, known only to Alice and Bob.
+
+\item \textbf{Predator-prey.} In this variant of the classic predator-prey
+game, N slower cooperating agents must chase the faster adversary around a
+randomly generated environment with L large landmarks impeding the way. Each
+time the cooperative agents collide with an adversary, the agents are rewarded
+while the adversary is penalized. Agents observe the relative positions and
+velocities of the agents, and the positions of the landmarks.
+
+
+\end{enumerate}
+
+
