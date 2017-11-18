@@ -93,8 +93,8 @@ J(\theta) = E_{s\sim p^\pi, a\sim \pi} [\log \pi_\theta (a|s) Q^\pi(s,a)]
 
 Different policy gradient methods estimate $Q^\pi$ function differently, for
 example, commonly used Monte-Carlo Policy Gradient (REINFORCE) simply
-simulates the entire episode to obtain the overall return. REINFORCE updates
-the policy function parameters using stochastic gradient descent.
+simulates the entire episode to obtain the overall return $G_t$. REINFORCE
+updates the policy function parameters using stochastic gradient descent.
 \begin{equation}
 \theta \leftarrow \theta
 	+ \alpha \gamma^t G_t \nabla_\theta \log \pi (A_t|S_t, \theta)
@@ -107,11 +107,17 @@ policy gradient updates can be large, making it hard to converge to the
 optimal policy and difficult to converge during training.
 
 
-\subsection{Actor Critic}
+\subsection{Actor-Critic}
 
-
-
-
+Actor-Critic mitigates the high variance problem of Policy Gradient techniques
+by combining Policy Gradient with value function based techniques. Recall that
+the objective function of Policy Gradient contains an estimation of the
+action-value function $Q^w$. In REINFORCE, we simply use the overall return as
+an approximation: $Q^w = G_t$, which is essentially sampling from the
+distribution of action-values. In Actor-Critic method, we use a value-based
+method, such as dynamic programming, monte-carlo method, temporal difference,
+or DQN, to approximate $Q^w$, which reduces the variance of the policy
+gradient updates.
 
 
 \subsection{Evolutionary Algorithms}
