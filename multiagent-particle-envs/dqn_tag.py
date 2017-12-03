@@ -8,10 +8,17 @@ import os
 import pickle
 from collections import namedtuple
 import code
+import errno
 from dqn import DQN
 
 from make_env import make_env
 
+def ensure_directory_exists(base_directory):
+    try:
+        os.makedirs(base_directory)
+    except OSError as ex:
+        if ex.errno != errno.EEXIST:
+            raise ex
 
 def main():
     parser = argparse.ArgumentParser()
@@ -22,6 +29,7 @@ def main():
                         action="store_true")
     parser.add_argument('--benchmark', default=False,
                         action="store_true")
+    parser.add_argument('--weights_filename_prefix', default='./save/tag-dqn')
     options = parser.parse_args()
 
     env = make_env(options.env, options.benchmark)
@@ -30,6 +38,12 @@ def main():
     print("env.n", env.n)
     print("env.world.dim_c", env.world.dim_c)
     dqns = [DQN(env.action_space[agent_i].n, env.observation_space[agent_i].shape[0]) for agent_i in range(env.n)]
+    for i, dqn in enumerate(dqns):
+        # TODO should not work if only some weights available?
+        dqn_filename = options.weights_filename_prefix + str(i) + ".h5"
+        if os.path.isfile(dqn_filename):
+            print("Found old weights to use for {}".format(i))
+            dqn.load(dqn_filename)
     state = env.reset()
     movement_rate = 0.01
     for step in itertools.count():
@@ -51,7 +65,10 @@ def main():
         if any(done):
             env.render()
             break
-
+    ensure_directory_exists(os.path.splitext(options.weights_filename_prefix)[0])
+    for i, dqn in enumerate(dqns):
+        dqn_filename = options.weights_filename_prefix + str(i) + ".h5"
+        dqn.save(dqn_filename)
 
 if __name__ == '__main__':
     main()

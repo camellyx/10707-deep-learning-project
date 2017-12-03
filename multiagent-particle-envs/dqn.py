@@ -68,3 +68,9 @@ class DQN:
                 state[np.newaxis, :], target, epochs=1, verbose=0)
 
         self.learning_step += 1
+    def load(self, name):
+        self.eval_network.load_weights(name)
+        self.target_network.load_weights(name)
+    def save(self, name):
+        self.eval_network.save_weights(name)
+        self.target_network.save_weights(name)
