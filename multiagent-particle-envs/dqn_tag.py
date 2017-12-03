@@ -31,6 +31,7 @@ def main():
     print("env.world.dim_c", env.world.dim_c)
     dqns = [DQN(env.action_space[agent_i].n, env.observation_space[agent_i].shape[0]) for agent_i in range(env.n)]
     state = env.reset()
+    movement_rate = 0.01
     for step in itertools.count():
         t = (step + 1) * 0.005
         if step >= options.train_episodes:
@@ -42,10 +43,11 @@ def main():
             # Calculate agent policy
             a = dqns[agent_i].choose_action(state[agent_i], t)
             onehot_action = np.zeros(4 + env.world.dim_c)
-            onehot_action[a] = 1
+            onehot_action[a] = 1 * movement_rate
             agent_actions.append(onehot_action)
         #print("agent_actions", agent_actions)
         state, reward, done, info = env.step(agent_actions)
+        print("reward", reward)
         if any(done):
             env.render()
             break
