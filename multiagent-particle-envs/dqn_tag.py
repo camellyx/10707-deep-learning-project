@@ -62,7 +62,7 @@ def main():
             agent_actions.append(onehot_action)
             actions.append(a)
         #print("agent_actions", agent_actions)
-        state, reward, done, info = env.step(agent_actions)
+        state_next, reward, done, info = env.step(agent_actions)
         print("reward", reward)
 
         for i in range(env.n):
@@ -71,7 +71,7 @@ def main():
                 dqns[i].learn()
 
         state = state_next
-        
+
         if any(done):
             env.render()
             break
