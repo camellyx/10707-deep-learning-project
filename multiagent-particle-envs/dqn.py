@@ -14,7 +14,6 @@ REPLACE_TARGET_STEPS = 200
 
 # TODO: prioritized replay buffer
 
-
 class DQN:
     def __init__(self, n_actions, state_size):
         self.n_actions = n_actions
@@ -35,7 +34,6 @@ class DQN:
         model.add(Dense(24, activation='relu'))
         model.add(Dense(self.n_actions, activation='linear'))
         model.compile(loss=self.huber_loss, optimizer=Adam())
-
         return model
 
     def update_target_weights(self):
