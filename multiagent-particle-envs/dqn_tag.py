@@ -39,15 +39,29 @@ def main():
         if options.render:
             env.render()
         agent_actions = []
+        actions = []
         for agent_i in range(env.n):
             # Calculate agent policy
             a = dqns[agent_i].choose_action(state[agent_i], t)
             onehot_action = np.zeros(4 + env.world.dim_c)
             onehot_action[a] = 1 * movement_rate
             agent_actions.append(onehot_action)
+            actions.append(a)
         #print("agent_actions", agent_actions)
         state, reward, done, info = env.step(agent_actions)
         print("reward", reward)
+
+        for i in range(env.n):
+            print(state[i])
+            print(agent_actions[i])
+            print(reward[i])
+            print(state_next[i])
+            dqns[i].remember(state[i], actions[i], reward[i], state_next[i], done)
+            if step > 500:
+                dqns[i].learn()
+
+        state = state_next
+        
         if any(done):
             env.render()
             break
