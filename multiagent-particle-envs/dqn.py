@@ -9,13 +9,18 @@ from keras import backend as K
 # TODO: prioritized replay buffer
 
 class DQN:
-    def __init__(self, n_actions, state_size, epsilon=0.5, gamma=0.9, batch_size=64, memory_size=2000, replace_target_steps=1000):
+    def __init__(self, n_actions, state_size, epsilon=0.5, gamma=0.9, \
+            batch_size=64, memory_size=2000, replace_target_steps=1000, \
+            learning_rate = 0.001):
+        """
+        epsilon and gamma are for RL parameters, not net parameters!
+        """
         self.n_actions = n_actions
         self.state_size = state_size
         self.memory = deque(maxlen=memory_size)
         self.learning_step = 0
-        self.eval_network = self.build_network()
-        self.target_network = self.build_network()
+        self.eval_network = self.build_network(learning_rate=learning_rate)
+        self.target_network = self.build_network(learning_rate=learning_rate)
         self.update_target_weights()
         self.epsilon=epsilon
         self.gamma = gamma
@@ -26,12 +31,12 @@ class DQN:
         error = prediction - target
         return K.mean(K.sqrt(1 + K.square(error)) - 1, axis=-1)
 
-    def build_network(self):
+    def build_network(self, learning_rate):
         model = Sequential()
         model.add(Dense(24, input_dim=self.state_size, activation='relu'))
         model.add(Dense(24, activation='relu'))
         model.add(Dense(self.n_actions, activation='linear'))
-        model.compile(loss=self.huber_loss, optimizer=Adam())
+        model.compile(loss=self.huber_loss, optimizer=Adam(lr=learning_rate))
         return model
 
     def update_target_weights(self):
