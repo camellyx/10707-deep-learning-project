@@ -35,6 +35,8 @@ def main():
     print("env.world.dim_c", env.world.dim_c)
     dqns = [DQN(env.action_space[agent_i].n, env.observation_space[agent_i].shape[0]) for agent_i in range(env.n)]
     general_utilities.load_dqn_weights_if_exist(dqns, options.weights_filename_prefix)
+    statistics_header = ["epoch", "reward_0", "reward_1"]
+    statistics = general_utilities.Time_Series_Statistics_Store(statistics_header)
     state = env.reset()
     movement_rate = 0.1
     for step in itertools.count():
@@ -53,6 +55,7 @@ def main():
             agent_actions.append(onehot_action)
             actions.append(a)
         state_next, reward, done, info = env.step(agent_actions)
+        statistics.add_statistics([step, reward[0], reward[1]])
         if step % 25 == 0:
             print("Step {step} with reward {reward}".format(step=step, reward=reward))
         for i in range(env.n):
@@ -68,6 +71,7 @@ def main():
     total_time = time.time() - start_time
     print("Finished {} episodes in {} seconds".format(options.train_episodes, total_time))
     general_utilities.save_dqn_weights(dqns, options.weights_filename_prefix)
+    statistics.dump("statistics.csv")
 
 if __name__ == '__main__':
     main()

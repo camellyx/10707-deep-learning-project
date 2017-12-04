@@ -1,3 +1,4 @@
+import csv
 import errno
 import os
 def ensure_directory_exists(base_directory):
@@ -30,3 +31,26 @@ def save_dqn_weights(dqns, weights_filename_prefix, weights_filename_extension="
         dqn_filename = weights_filename_prefix + str(i) + weights_filename_extension
         dqn.save(dqn_filename)
 
+class Time_Series_Statistics_Store(object):
+    """
+    Logs time series data.
+    Header should represent every column in data.
+    For example:
+        epoch | loss
+        0     | 1
+        1     | 0.5
+        2     | 0.3
+    """
+    def __init__(self, header):
+        self.statistics = []
+        self.header = header
+    def add_statistics(self, data):
+        if len(data) != len(self.header):
+            raise ValueError("Data length does not match header")
+        self.statistics.append(data)
+    def dump(self, dump_filename="statistics.csv"):
+        with open(dump_filename, "w") as csvfile:
+            wr = csv.writer(csvfile)
+            wr.writerow(self.header)
+            for stat in self.statistics:
+                wr.writerow(stat)
