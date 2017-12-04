@@ -33,7 +33,8 @@ class DQN:
 
     def build_network(self, learning_rate):
         model = Sequential()
-        model.add(Dense(24, input_dim=self.state_size, activation='relu'))
+        model.add(Dense(50, input_dim=self.state_size, activation='relu'))
+        model.add(Dense(30, activation='relu'))
         model.add(Dense(24, activation='relu'))
         model.add(Dense(self.n_actions, activation='linear'))
         model.compile(loss=self.huber_loss, optimizer=Adam(lr=learning_rate))
