@@ -55,22 +55,32 @@ class DQN:
             self.update_target_weights()
 
         minibatch = random.sample(self.memory, BATCH_SIZE)
-        for state, action, reward, state_next, done in minibatch:
-            target = self.eval_network.predict(state[np.newaxis, :])
-            if done:
-                target[0][action] = reward
-            else:
-                e = self.eval_network.predict(state_next[np.newaxis, :])[0]
-                t = self.target_network.predict(state_next[np.newaxis, :])[0]
-                target[0][action] = reward + GAMMA * t[np.argmax(e)]
+        minibatch_state, minibatch_action, minibatch_reward, \
+                minibatch_state_next, minibatch_done = map(np.array, zip(*minibatch))
 
-            self.eval_network.fit(
-                state[np.newaxis, :], target, epochs=1, verbose=0)
+        # minibatch_done is the same for all agents
+        if minibatch_done.ndim > 1:
+            minibatch_done = minibatch_done[:, 0]
+        minibatch_not_done = np.logical_not(minibatch_done)
 
+        minibatch_e = self.eval_network.predict(minibatch_state_next)
+        minibatch_t = self.target_network.predict(minibatch_state_next)
+
+        best_action = np.argmax(minibatch_e, axis=1)
+        discounted_reward = GAMMA * minibatch_t[np.arange(minibatch_t.shape[0]), best_action]
+
+        minibatch_target = self.eval_network.predict(minibatch_state)
+        minibatch_target[np.arange(minibatch_target.shape[0]), minibatch_action] = minibatch_reward
+        minibatch_target[minibatch_not_done, minibatch_action[minibatch_not_done]] += discounted_reward[minibatch_not_done]
+
+        self.eval_network.fit(minibatch_state, minibatch_target, epochs=1, verbose=0)
         self.learning_step += 1
+
     def load(self, name):
         self.eval_network.load_weights(name)
         self.target_network.load_weights(name)
+
     def save(self, name):
         self.eval_network.save_weights(name)
         self.target_network.save_weights(name)
+
