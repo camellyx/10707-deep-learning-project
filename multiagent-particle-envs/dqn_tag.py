@@ -74,10 +74,9 @@ def main():
             onehot_action[a] = 1 * movement_rate
             agent_actions.append(onehot_action)
             actions.append(a)
-        #print("agent_actions", agent_actions)
         state_next, reward, done, info = env.step(agent_actions)
-        print("reward", reward)
-
+        if step % 25 == 0:
+            print("Step {step} with reward {reward}".format(step=step, reward=reward))
         for i in range(env.n):
             dqns[i].remember(state[i], actions[i], reward[i], state_next[i], done[i])
             if step > 500:
