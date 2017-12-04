@@ -65,7 +65,7 @@ def main():
                                                                    else Tag_Actions.STOP.value
             else:
                 a = dqns[agent_i].choose_action(state[agent_i], t)
-            onehot_action = np.zeros(4 + env.world.dim_c)
+            onehot_action = np.zeros(env.action_space[agent_i].n)
             onehot_action[a] = 1 * movement_rate
             agent_actions.append(onehot_action)
             actions.append(a)
