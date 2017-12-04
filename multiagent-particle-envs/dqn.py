@@ -58,9 +58,6 @@ class DQN:
         minibatch_state, minibatch_action, minibatch_reward, \
                 minibatch_state_next, minibatch_done = map(np.array, zip(*minibatch))
 
-        # minibatch_done is the same for all agents
-        if minibatch_done.ndim > 1:
-            minibatch_done = minibatch_done[:, 0]
         minibatch_not_done = np.logical_not(minibatch_done)
 
         minibatch_e = self.eval_network.predict(minibatch_state_next)

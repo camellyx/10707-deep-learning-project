@@ -68,7 +68,7 @@ def main():
         print("reward", reward)
 
         for i in range(env.n):
-            dqns[i].remember(state[i], actions[i], reward[i], state_next[i], done)
+            dqns[i].remember(state[i], actions[i], reward[i], state_next[i], done[i])
             if step > 500:
                 dqns[i].learn()
 
