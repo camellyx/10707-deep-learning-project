@@ -8,6 +8,7 @@ import os
 import pickle
 from collections import namedtuple
 import code
+import random
 
 from dqn import DQN
 from make_env import make_env
@@ -33,9 +34,12 @@ def main():
     parser.add_argument('--naive', default=False,
                         action="store_true",
                         help="disables all agents except one")
+    parser.add_argument('--random_seed', default=2, type=int)
     options = parser.parse_args()
     start_time = time.time()
 
+    np.random.seed(options.random_seed)
+    random.seed(options.random_seed)
     env = make_env(options.env, options.benchmark)
     print("action space", env.action_space)
     print("observation space", env.observation_space)
