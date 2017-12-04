@@ -43,7 +43,7 @@ def main():
     print("env.world.dim_c", env.world.dim_c)
     dqns = [DQN(env.action_space[agent_i].n, env.observation_space[agent_i].shape[0]) for agent_i in range(env.n)]
     general_utilities.load_dqn_weights_if_exist(dqns, options.weights_filename_prefix)
-    statistics_header = ["epoch", "reward_0", "reward_1"]
+    statistics_header = ["epoch", "reward_0", "reward_1", "loss_0", "loss_1"]
     statistics = general_utilities.Time_Series_Statistics_Store(statistics_header)
     state = env.reset()
     movement_rate = 0.1
@@ -67,14 +67,18 @@ def main():
             agent_actions.append(onehot_action)
             actions.append(a)
         state_next, reward, done, info = env.step(agent_actions)
-        statistics.add_statistics([step, reward[0], reward[1]])
         if step % 25 == 0:
             print("Step {step} with reward {reward}".format(step=step, reward=reward))
+        losses = []
         for i in range(env.n):
             dqns[i].remember(state[i], actions[i], reward[i], state_next[i], done[i])
             if step > 500:
-                dqns[i].learn()
+                history = dqns[i].learn()
+                losses.append(history.history["loss"][0])
+            else:
+                losses.append(-1)
 
+        statistics.add_statistics([step, reward[0], reward[1], losses[0], losses[1]])
         state = state_next
 
         if any(done):

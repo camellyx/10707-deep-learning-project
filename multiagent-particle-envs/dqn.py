@@ -70,8 +70,9 @@ class DQN:
         minibatch_target[np.arange(minibatch_target.shape[0]), minibatch_action] = minibatch_reward
         minibatch_target[minibatch_not_done, minibatch_action[minibatch_not_done]] += discounted_reward[minibatch_not_done]
 
-        self.eval_network.fit(minibatch_state, minibatch_target, epochs=1, verbose=0)
+        history = self.eval_network.fit(minibatch_state, minibatch_target, epochs=1, verbose=0)
         self.learning_step += 1
+        return history
 
     def load(self, name):
         self.eval_network.load_weights(name)

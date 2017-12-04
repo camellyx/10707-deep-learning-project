@@ -65,8 +65,8 @@ if __name__ == "__main__":
     if args.loss or args.error or args.perplexity:
         selected = []
         if args.loss:
-            selected.append("validation_loss")
-            selected.append("train_loss")
+            #selected.append("loss_0")
+            selected.append("loss_1")
         if args.error:
             selected.append("validation_error")
             selected.append("train_error")
