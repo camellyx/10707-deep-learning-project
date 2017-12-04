@@ -6,7 +6,6 @@ import itertools
 import time
 import os
 import pickle
-from collections import namedtuple
 import code
 import random
 
