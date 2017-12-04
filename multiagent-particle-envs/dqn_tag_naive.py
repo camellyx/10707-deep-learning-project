@@ -25,6 +25,8 @@ def main():
     parser.add_argument('--benchmark', default=False,
                         action="store_true")
     parser.add_argument('--weights_filename_prefix', default='./save/tag-dqn')
+    parser.add_argument('--testing', default=False,
+                        action="store_true")
     options = parser.parse_args()
     start_time = time.time()
 
