@@ -117,6 +117,7 @@ def main():
             memories[role].append(state[i], actions[i], reward[i], done[i])
 
         if step > 500:
+            losses = []
             for role in [0, 1]:
                 experiences = memories[role].sample(options.batch_size)
 
@@ -152,7 +153,8 @@ def main():
                     target[action] = R
                 history = models[role].fit(state0_batch, targets,
                                            batch_size=options.batch_size, verbose=0)
-                print(history.history)
+                losses.append(history.history['loss'][-1])
+            print(losses)
 
         if any(done):
             state = env.reset()
