@@ -24,11 +24,15 @@ def main():
                         action="store_true")
     parser.add_argument('--benchmark', default=False,
                         action="store_true")
-    parser.add_argument('--weights_filename_prefix', default='./save/tag-dqn')
+    parser.add_argument('--weights_filename_prefix',
+                        default='./save/tag-dqn',
+                        help="where to store/load network weights")
     parser.add_argument('--testing', default=False,
-                        action="store_true")
+                        action="store_true",
+                        help="reduces exploration substantially")
     parser.add_argument('--naive', default=False,
-                        action="store_true")
+                        action="store_true",
+                        help="disables all agents except one")
     options = parser.parse_args()
     start_time = time.time()
 
