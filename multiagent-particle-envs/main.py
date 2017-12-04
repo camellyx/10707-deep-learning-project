@@ -28,8 +28,6 @@ from rl.memory import SequentialMemory
 from rl.core import Processor
 from rl.callbacks import FileLogger, ModelIntervalCheckpoint
 
-from processors import *
-
 
 class Agent(object):
 
@@ -118,7 +116,8 @@ def main():
                 role = 0
             memories[role].append(state[i], actions[i], reward[i], done[i])
 
-            if step > 500:
+        if step > 500:
+            for role in [0, 1]:
                 experiences = memories[role].sample(options.batch_size)
 
                 # Start by extracting the necessary parameters (we use a
@@ -151,8 +150,9 @@ def main():
                 Rs = reward_batch + discounted_reward_batch
                 for idx, (target, R, action) in enumerate(zip(targets, Rs, action_batch)):
                     target[action] = R
-                models[role].fit(state0_batch, targets,
-                                 batch_size=options.batch_size, verbose=0)
+                history = models[role].fit(state0_batch, targets,
+                                           batch_size=options.batch_size, verbose=0)
+                print(history.history)
 
         if any(done):
             state = env.reset()
