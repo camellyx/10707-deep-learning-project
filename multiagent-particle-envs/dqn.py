@@ -9,7 +9,7 @@ from keras import backend as K
 # TODO: prioritized replay buffer
 
 class DQN:
-    def __init__(self, n_actions, state_size, epsilon=0.001, gamma=0.9, batch_size=64, memory_size=2000, replace_target_steps=1000):
+    def __init__(self, n_actions, state_size, epsilon=0.5, gamma=0.9, batch_size=64, memory_size=2000, replace_target_steps=1000):
         self.n_actions = n_actions
         self.state_size = state_size
         self.memory = deque(maxlen=memory_size)
