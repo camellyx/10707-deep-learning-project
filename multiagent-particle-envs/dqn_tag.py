@@ -34,6 +34,10 @@ def main():
                         action="store_true",
                         help="disables all agents except one")
     parser.add_argument('--random_seed', default=2, type=int)
+    parser.add_argument('--episodic',
+                        default=False,
+                        action="store_true",
+                        help="enables episodic runs")
     options = parser.parse_args()
     start_time = time.time()
 
@@ -70,6 +74,8 @@ def main():
             agent_actions.append(onehot_action)
             actions.append(a)
         state_next, reward, done, info = env.step(agent_actions)
+        if options.episodic and step % 200 == 0:
+            done = np.ones(len(done))
         if step % 25 == 0:
             print("Step {step} with reward {reward}".format(step=step, reward=reward))
         losses = []
@@ -86,7 +92,8 @@ def main():
 
         if any(done):
             state = env.reset()
-            env.render()
+            if options.render:
+                env.render()
     total_time = time.time() - start_time
     print("Finished {} episodes in {} seconds".format(options.train_episodes, total_time))
     general_utilities.save_dqn_weights(dqns, options.weights_filename_prefix)
