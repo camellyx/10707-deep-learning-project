@@ -22,7 +22,8 @@ def ensure_directory_exists(base_directory):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--env', default='simple_tag', type=str)
+    # Can also use 'simple_tag'
+    parser.add_argument('--env', default='simple_tag_guided', type=str)
     parser.add_argument('--learning_rate', default=5e-5, type=float)
     parser.add_argument('--train_episodes', default=1e3, type=int)
     parser.add_argument('--render', default=False,
