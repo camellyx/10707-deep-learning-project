@@ -8,28 +8,11 @@ import os
 import pickle
 from collections import namedtuple
 import code
-import errno
-import enum
 
 from dqn import DQN
 from make_env import make_env
-
-def ensure_directory_exists(base_directory):
-    try:
-        os.makedirs(base_directory)
-    except OSError as ex:
-        if ex.errno != errno.EEXIST:
-            raise ex
-
-class Tag_Actions(enum.Enum):
-    """
-    Actions allowed for simple tag env
-    """
-    STOP = 0
-    RIGHT = 1
-    LEFT = 2
-    UP = 3
-    DOWN = 4
+from tag_utilities import Tag_Actions
+import general_utilities
 
 def main():
     parser = argparse.ArgumentParser()
@@ -51,12 +34,7 @@ def main():
     print("env.n", env.n)
     print("env.world.dim_c", env.world.dim_c)
     dqns = [DQN(env.action_space[agent_i].n, env.observation_space[agent_i].shape[0]) for agent_i in range(env.n)]
-    for i, dqn in enumerate(dqns):
-        # TODO should not work if only some weights available?
-        dqn_filename = options.weights_filename_prefix + str(i) + ".h5"
-        if os.path.isfile(dqn_filename):
-            print("Found old weights to use for {}".format(i))
-            dqn.load(dqn_filename)
+    general_utilities.load_dqn_weights_if_exist(dqns, options.weights_filename_prefix)
     state = env.reset()
     movement_rate = 0.1
     for step in itertools.count():
@@ -90,12 +68,9 @@ def main():
         if any(done):
             state = env.reset()
             env.render()
-    ensure_directory_exists(os.path.splitext(options.weights_filename_prefix)[0])
     total_time = time.time() - start_time
     print("Finished {} episodes in {} seconds".format(options.train_episodes, total_time))
-    for i, dqn in enumerate(dqns):
-        dqn_filename = options.weights_filename_prefix + str(i) + ".h5"
-        dqn.save(dqn_filename)
+    general_utilities.save_dqn_weights(dqns, options.weights_filename_prefix)
 
 if __name__ == '__main__':
     main()
