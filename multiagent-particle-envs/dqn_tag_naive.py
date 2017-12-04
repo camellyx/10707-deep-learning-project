@@ -69,7 +69,10 @@ def main():
         actions = []
         for agent_i in range(env.n):
             # Calculate agent policy
-            a = dqns[agent_i].choose_action(state[agent_i], t)
+            if agent_i != 0:
+                a = Tag_Actions.STOP.value
+            else:
+                a = dqns[agent_i].choose_action(state[agent_i], t)
             onehot_action = np.zeros(4 + env.world.dim_c)
             onehot_action[a] = 1 * movement_rate
             agent_actions.append(onehot_action)
