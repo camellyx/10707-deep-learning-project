@@ -117,7 +117,7 @@ def main():
             model.add(Dense(options.linear_size, activation='relu',
                             input_shape=(n_states[n],)))
             model.add(Dense(options.linear_size, activation='relu'))
-            model.add(Dense(n_actions[n], activation='linear'))
+            model.add(Dense(n_actions[n], activation='softmax'))
             model.compile(optimizer=Adam(
                 lr=options.learning_rate), loss='mse', metrics=['mae'])
             print(model.summary())
@@ -137,7 +137,7 @@ def main():
     state = env.reset()
     for step in itertools.count(agent.step):
         agent.step = step
-        if step >= options.train_episodes:
+        if epoch >= options.train_episodes:
             break
         if options.render:
             env.render()
@@ -157,6 +157,7 @@ def main():
             onehot_actions.append(onehot_action)
 
         next_state, reward, done, info = env.step(onehot_actions)
+        done = [any(reward[:3])] * 4
         reward = np.clip(reward, -1., 1.)
 
         for i in range(env.n):
@@ -220,6 +221,8 @@ def main():
                 pk.dump(my_history, f)
 
         if any(done) or step - last_epoch_step > 100:
+            if any(done):
+                print("done! in", step - last_epoch_step, "steps")
             state = env.reset()
             epoch += 1
             last_epoch_step = step
