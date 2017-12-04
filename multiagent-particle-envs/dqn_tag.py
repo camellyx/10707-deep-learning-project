@@ -75,8 +75,8 @@ def main():
         state = state_next
 
         if any(done):
+            state = env.reset()
             env.render()
-            break
     ensure_directory_exists(os.path.splitext(options.weights_filename_prefix)[0])
     total_time = time.time() - start_time
     print("Finished {} episodes in {} seconds".format(options.train_episodes, total_time))
