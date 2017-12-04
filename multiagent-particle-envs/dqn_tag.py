@@ -24,13 +24,14 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--env', default='simple_tag', type=str)
     parser.add_argument('--learning_rate', default=5e-5, type=float)
-    parser.add_argument('--train_episodes', default=1e5, type=int)
+    parser.add_argument('--train_episodes', default=1e3, type=int)
     parser.add_argument('--render', default=False,
                         action="store_true")
     parser.add_argument('--benchmark', default=False,
                         action="store_true")
     parser.add_argument('--weights_filename_prefix', default='./save/tag-dqn')
     options = parser.parse_args()
+    start_time = time.time()
 
     env = make_env(options.env, options.benchmark)
     print("action space", env.action_space)
@@ -45,7 +46,7 @@ def main():
             print("Found old weights to use for {}".format(i))
             dqn.load(dqn_filename)
     state = env.reset()
-    movement_rate = 0.01
+    movement_rate = 0.1
     for step in itertools.count():
         t = (step + 1) * 0.005
         if step >= options.train_episodes:
@@ -76,6 +77,8 @@ def main():
             env.render()
             break
     ensure_directory_exists(os.path.splitext(options.weights_filename_prefix)[0])
+    total_time = time.time() - start_time
+    print("Finished {} episodes in {} seconds".format(options.train_episodes, total_time))
     for i, dqn in enumerate(dqns):
         dqn_filename = options.weights_filename_prefix + str(i) + ".h5"
         dqn.save(dqn_filename)
