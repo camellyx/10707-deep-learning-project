@@ -16,6 +16,6 @@ Deep Learning Course Project
 * state[2:4] coordinate of agent[i]
 * state[4:8] relative coordinate of 2 landmarks
 * state[8:14] relative coordinate of 3 other agents
-* state[14:16] communication channel (the adversary does not have this)
+* state[14:16] velocity of adversary
 
-* action[0:7] is one hot encoding of [no_action, right, left, down, up, 2 x communication (the adversary does not have this)]
+* action[0:7] is one hot encoding of [no_action, right, left, down, up]
