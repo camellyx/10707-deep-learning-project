@@ -66,7 +66,7 @@ if __name__ == "__main__":
     df = pd.read_csv(args.filename, delimiter=",", header=0, index_col=0)
 
     selected = df.keys()
-    if args.loss or args.error or args.perplexity:
+    if args.loss or args.error or args.perplexity or args.reward or args.cum_reward:
         selected = []
         if args.loss:
             selected.append("loss_0")
