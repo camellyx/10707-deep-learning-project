@@ -50,10 +50,11 @@ def main():
     print("env.world.dim_c", env.world.dim_c)
     dqns = [DQN(env.action_space[agent_i].n, env.observation_space[agent_i].shape[0]) for agent_i in range(env.n)]
     general_utilities.load_dqn_weights_if_exist(dqns, options.weights_filename_prefix)
-    statistics_header = ["epoch", "reward_0", "reward_1", "loss_0", "loss_1"]
+    statistics_header = ["epoch", "reward_0", "reward_1", "loss_0", "loss_1", "cum_reward_0", "cum_reward_1"]
     statistics = general_utilities.Time_Series_Statistics_Store(statistics_header)
     state = env.reset()
     movement_rate = 0.1
+    cum_reward = np.zeros(env.n)
     for step in itertools.count():
         t = (step + 1) * 0.005 if not options.testing else 1000
         if step >= options.train_episodes:
@@ -74,6 +75,7 @@ def main():
             agent_actions.append(onehot_action)
             actions.append(a)
         state_next, reward, done, info = env.step(agent_actions)
+        cum_reward += reward
         if options.episodic and step % 200 == 0:
             done = np.ones(len(done))
         if step % 25 == 0:
@@ -87,11 +89,12 @@ def main():
             else:
                 losses.append(-1)
 
-        statistics.add_statistics([step, reward[0], reward[1], losses[0], losses[1]])
+        statistics.add_statistics([step, reward[0], reward[1], losses[0], losses[1], cum_reward[0], cum_reward[1]])
         state = state_next
 
         if any(done):
             state = env.reset()
+            cum_reward = np.zeros(env.n)
             if options.render:
                 env.render()
     total_time = time.time() - start_time
