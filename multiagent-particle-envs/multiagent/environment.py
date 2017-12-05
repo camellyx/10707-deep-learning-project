@@ -140,7 +140,7 @@ class MultiAgentEnv(gym.Env):
     def _get_done(self, agent):
         if self.done_callback is None:
             return False
-        return self.observation_callback(agent, self.world)
+        return self.done_callback(agent, self.world)
 
     # get reward for a particular agent
     def _get_reward(self, agent):
@@ -222,7 +222,7 @@ class MultiAgentEnv(gym.Env):
                         word = alphabet[np.argmax(other.state.c)]
                     message += (other.name + ' to ' +
                                 agent.name + ': ' + word + '   ')
-            # print(message)
+            print(message)
 
         if close:
             # close any existic renderers
