@@ -120,7 +120,7 @@ def main():
             model = Sequential()
             model.add(Dense(options.linear_size, activation='relu',
                             input_shape=(n_states[n],)))
-            model.add(Dense(options.linear_size, activation='relu'))
+            # model.add(Dense(options.linear_size, activation='relu'))
             model.add(Dense(n_actions[n], activation='linear'))
             model.compile(optimizer=Adam(
                 lr=options.learning_rate), loss='mse', metrics=['mae'])
@@ -139,7 +139,7 @@ def main():
         policies.append(LinearAnnealedPolicy(EpsGreedyQPolicy(), attr='eps',
                                              value_max=1., value_min=.1,
                                              value_test=.05,
-                                             nb_steps=10000))
+                                             nb_steps=100000))
         policies[-1]._set_agent(agent)
 
     fill_memory(options, env, memories)
