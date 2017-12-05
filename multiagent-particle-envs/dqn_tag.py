@@ -44,6 +44,10 @@ def play():
         # learn
         if not args.testing:
             losses = []
+            size = memories[0].pointer
+            batch = random.sample(range(size), size) if size < BATCH_SIZE else random.sample(
+                range(size), BATCH_SIZE)
+
             for i in range(env.n):
                 if done[i]:
                     rewards[i] *= 100
@@ -52,7 +56,7 @@ def play():
                                      rewards[i], states_next[i], done[i])
 
                 if memories[i].pointer > BATCH_SIZE * 10:
-                    history = dqns[i].learn(*memories[i].sample(BATCH_SIZE))
+                    history = dqns[i].learn(*memories[i].sample(batch))
                     losses.append(history.history["loss"][0])
                 else:
                     losses.append(-1)

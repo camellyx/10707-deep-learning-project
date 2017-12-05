@@ -39,6 +39,10 @@ def play():
         # learn
         if not args.testing:
             losses = []
+            size = memories[0].pointer
+            batch = random.sample(range(size), size) if size < BATCH_SIZE else random.sample(
+                range(size), BATCH_SIZE)
+
             for i in range(env.n):
                 if done[i]:
                     rewards[i] *= 100
@@ -47,7 +51,7 @@ def play():
                                      rewards[i], states_next[i], done[i])
 
                 if memories[i].pointer > BATCH_SIZE * 10:
-                    s, a, r, sn, _ = memories[i].sample(BATCH_SIZE)
+                    s, a, r, sn, _ = memories[i].sample(batch)
                     r = np.reshape(r, (BATCH_SIZE, 1))
                     critics[i].learn(s, a, r, sn)
                     actors[i].learn(s)
