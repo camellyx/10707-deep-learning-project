@@ -16,7 +16,7 @@ from make_env import make_env
 import general_utilities
 
 MEMORY_SIZE = 10000
-BATCH_SIZE = 32
+BATCH_SIZE = 64
 
 
 def play():
