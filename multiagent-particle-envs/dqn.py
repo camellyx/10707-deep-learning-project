@@ -84,5 +84,3 @@ class DQN:
 
     def save(self, name):
         self.eval_network.save_weights(name)
-        self.target_network.save_weights(name)
-
