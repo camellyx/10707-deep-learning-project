@@ -49,6 +49,10 @@ if __name__ == "__main__":
                         help="Rolling average size")
     parser.add_argument("--loss",\
                         action="store_true")
+    parser.add_argument("--reward",\
+                        action="store_true")
+    parser.add_argument("--cum_reward",\
+                        action="store_true")
     parser.add_argument("--error",\
                         action="store_true")
     parser.add_argument("--perplexity",\
@@ -65,8 +69,14 @@ if __name__ == "__main__":
     if args.loss or args.error or args.perplexity:
         selected = []
         if args.loss:
-            #selected.append("loss_0")
+            selected.append("loss_0")
             selected.append("loss_1")
+        if args.reward:
+            selected.append("reward_0")
+            selected.append("reward_1")
+        if args.cum_reward:
+            selected.append("cum_reward_0")
+            selected.append("cum_reward_1")
         if args.error:
             selected.append("validation_error")
             selected.append("train_error")

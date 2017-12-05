@@ -6,8 +6,8 @@ import itertools
 import time
 import os
 import pickle
-from collections import namedtuple
 import code
+import random
 
 from dqn import DQN
 from make_env import make_env
@@ -33,9 +33,16 @@ def main():
     parser.add_argument('--naive', default=False,
                         action="store_true",
                         help="disables all agents except one")
+    parser.add_argument('--random_seed', default=2, type=int)
+    parser.add_argument('--episodic',
+                        default=False,
+                        action="store_true",
+                        help="enables episodic runs")
     options = parser.parse_args()
     start_time = time.time()
 
+    np.random.seed(options.random_seed)
+    random.seed(options.random_seed)
     env = make_env(options.env, options.benchmark)
     print("action space", env.action_space)
     print("observation space", env.observation_space)
@@ -43,10 +50,11 @@ def main():
     print("env.world.dim_c", env.world.dim_c)
     dqns = [DQN(env.action_space[agent_i].n, env.observation_space[agent_i].shape[0]) for agent_i in range(env.n)]
     general_utilities.load_dqn_weights_if_exist(dqns, options.weights_filename_prefix)
-    statistics_header = ["epoch", "reward_0", "reward_1", "loss_0", "loss_1"]
+    statistics_header = ["epoch", "reward_0", "reward_1", "loss_0", "loss_1", "cum_reward_0", "cum_reward_1"]
     statistics = general_utilities.Time_Series_Statistics_Store(statistics_header)
     state = env.reset()
     movement_rate = 0.1
+    cum_reward = np.zeros(env.n)
     for step in itertools.count():
         t = (step + 1) * 0.005 if not options.testing else 1000
         if step >= options.train_episodes:
@@ -62,11 +70,14 @@ def main():
                                                                    else Tag_Actions.STOP.value
             else:
                 a = dqns[agent_i].choose_action(state[agent_i], t)
-            onehot_action = np.zeros(4 + env.world.dim_c)
+            onehot_action = np.zeros(env.action_space[agent_i].n)
             onehot_action[a] = 1 * movement_rate
             agent_actions.append(onehot_action)
             actions.append(a)
         state_next, reward, done, info = env.step(agent_actions)
+        cum_reward += reward
+        if options.episodic and step % 200 == 0:
+            done = np.ones(len(done))
         if step % 25 == 0:
             print("Step {step} with reward {reward}".format(step=step, reward=reward))
         losses = []
@@ -78,12 +89,14 @@ def main():
             else:
                 losses.append(-1)
 
-        statistics.add_statistics([step, reward[0], reward[1], losses[0], losses[1]])
+        statistics.add_statistics([step, reward[0], reward[1], losses[0], losses[1], cum_reward[0], cum_reward[1]])
         state = state_next
 
         if any(done):
             state = env.reset()
-            env.render()
+            cum_reward = np.zeros(env.n)
+            if options.render:
+                env.render()
     total_time = time.time() - start_time
     print("Finished {} episodes in {} seconds".format(options.train_episodes, total_time))
     general_utilities.save_dqn_weights(dqns, options.weights_filename_prefix)
