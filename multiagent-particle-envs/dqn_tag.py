@@ -17,7 +17,6 @@ import general_utilities
 MEMORY_SIZE = 10000
 BATCH_SIZE = 64
 
-
 def play(episodes, is_render, is_testing, checkpoint_interval, \
         weights_filename_prefix, csv_filename_prefix):
     # init statistics. NOTE: simple tag specific!
@@ -96,14 +95,22 @@ if __name__ == '__main__':
     parser.add_argument('--episodes', default=500000, type=int)
     parser.add_argument('--render', default=False, action="store_true")
     parser.add_argument('--benchmark', default=False, action="store_true")
-    parser.add_argument('--weights_filename_prefix', default='./save/tag-dqn',
+    parser.add_argument('--experiment_prefix', default=".",
+                        help="directory to store all experiment data")
+    parser.add_argument('--weights_filename_prefix', default='/save/tag-dqn',
                         help="where to store/load network weights")
+    parser.add_argument('--csv_filename_prefix', default='/save/statistics-dqn',
+                        help="where to store statistics")
+    parser.add_argument('--checkpoint_frequency', default=500,
+                        help="how often to checkpoint")
     parser.add_argument('--testing', default=False, action="store_true",
                         help="reduces exploration substantially")
     parser.add_argument('--random_seed', default=2, type=int)
     args = parser.parse_args()
 
-    general_utilities.dump_dict_as_json(vars(args), "./save/run_parameters.json")
+    general_utilities.dump_dict_as_json(vars(args),
+            args.experiment_prefix + "/save/run_parameters.json")
+
     # init env
     env = make_env(args.env, args.benchmark)
 
@@ -121,16 +128,18 @@ if __name__ == '__main__':
     dqns = [DQN(n_actions[i], state_sizes[i]) for i in range(env.n)]
 
     general_utilities.load_dqn_weights_if_exist(
-        dqns, args.weights_filename_prefix)
+        dqns, args.experiment_prefix + args.weights_filename_prefix)
 
     start_time = time.time()
 
     # play
-    csv_filename_prefix = "./save/statistics-dqn"
-    statistics = play(args.episodes, args.render, args.testing, 500, args.weights_filename_prefix, csv_filename_prefix)
+    statistics = play(args.episodes, args.render, args.testing,
+            args.checkpoint_frequency,
+            args.experiment_prefix + args.weights_filename_prefix,
+            args.experiment_prefix + args.csv_filename_prefix)
 
     # bookkeeping
     print("Finished {} episodes in {} seconds".format(args.episodes,
                                                       time.time() - start_time))
-    general_utilities.save_dqn_weights(dqns, args.weights_filename_prefix)
-    statistics.dump(csv_filename_prefix + ".csv")
+    general_utilities.save_dqn_weights(dqns, args.experiment_prefix + args.weights_filename_prefix)
+    statistics.dump(args.experiment_prefix + args.csv_filename_prefix + ".csv")
