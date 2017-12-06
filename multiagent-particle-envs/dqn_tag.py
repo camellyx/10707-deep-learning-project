@@ -18,13 +18,22 @@ MEMORY_SIZE = 10000
 BATCH_SIZE = 64
 
 
-def play():
+def play(episodes, is_render, is_testing, checkpoint_interval, \
+        weights_filename_prefix, csv_filename_prefix):
+    # init statistics. NOTE: simple tag specific!
+    statistics_header = ["epoch"]
+    statistics_header.extend(["reward_{}".format(i) for i in range(env.n)])
+    statistics_header.extend(["loss_{}".format(i) for i in range(env.n)])
+    print("Collecting statistics {}:".format(" ".join(statistics_header)))
+    statistics = general_utilities.Time_Series_Statistics_Store(
+        statistics_header)
+
     states = env.reset()
     speed = 0.1
 
-    for episode in range(args.episodes):
+    for episode in range(episodes):
         # render
-        if args.render:
+        if is_render:
             env.render()
 
         # act
@@ -42,7 +51,7 @@ def play():
         states_next, rewards, done, info = env.step(actions_onehot)
 
         # learn
-        if not args.testing:
+        if not is_testing:
             losses = []
             size = memories[0].pointer
             batch = random.sample(range(size), size) if size < BATCH_SIZE else random.sample(
@@ -71,6 +80,13 @@ def play():
         # reset states if done
         if any(done):
             states = env.reset()
+
+        if episode % checkpoint_interval == 0:
+            statistics.dump("{}_{}.csv".format(csv_filename_prefix, episode))
+            general_utilities.save_dqn_weights(dqns, \
+                    "{}_{}_".format(weights_filename_prefix, episode))
+
+    return statistics
 
 
 if __name__ == '__main__':
@@ -106,17 +122,14 @@ if __name__ == '__main__':
     general_utilities.load_dqn_weights_if_exist(
         dqns, args.weights_filename_prefix)
 
-    # init statistics. NOTE: simple tag specific!
-    statistics_header = ["epoch", "reward_0", "reward_1", "loss_0", "loss_1"]
-    statistics = general_utilities.Time_Series_Statistics_Store(
-        statistics_header)
     start_time = time.time()
 
     # play
-    play()
+    csv_filename_prefix = "./save/statistics-dqn"
+    statistics = play(args.episodes, args.render, args.testing, 500, args.weights_filename_prefix, csv_filename_prefix)
 
     # bookkeeping
     print("Finished {} episodes in {} seconds".format(args.episodes,
                                                       time.time() - start_time))
     general_utilities.save_dqn_weights(dqns, args.weights_filename_prefix)
-    statistics.dump("./save/statistics-dqn.csv")
+    statistics.dump(csv_filename_prefix + ".csv")

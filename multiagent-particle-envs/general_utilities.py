@@ -49,6 +49,7 @@ class Time_Series_Statistics_Store(object):
             raise ValueError("Data length does not match header")
         self.statistics.append(data)
     def dump(self, dump_filename="statistics.csv"):
+        ensure_directory_exists(os.path.splitext(dump_filename)[0])
         with open(dump_filename, "w") as csvfile:
             wr = csv.writer(csvfile)
             wr.writerow(self.header)
