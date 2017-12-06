@@ -60,20 +60,26 @@ def play():
             states = states_next
 
             # collect statistics and print rewards. NOTE: simple tag specific!
-            statistics.add_statistics([episode, rewards[0], rewards[-1],
-                                       losses[0], losses[-1]])
-            # print('Episode: ', episode, ' Rewards: ', rewards)
+            statistic = [episode]
+            statistic.extend([rewards[i] for i in range(env.n)])
+            statistic.extend([losses[i] for i in range(env.n)])
+            statistics.add_statistics(statistic)
+            if episode % 25 == 0:
+                print('Episode: ', episode, ' Rewards: ', rewards)
 
         # reset states if done
         if any(done):
             states = env.reset()
 
         if episode % args.checkpoint_frequency == 0:
-            statistics.dump(args.csv_filename_prefix + ".csv")
+            statistics.dump("{}_{}.csv".format(args.csv_filename_prefix, episode))
             general_utilities.save_dqn_weights(critics,
                                                args.weights_filename_prefix + "critic_")
             general_utilities.save_dqn_weights(actors,
                                                args.weights_filename_prefix + "actor_")
+            if episode >= args.checkpoint_frequency:
+                os.remove("{}_{}.csv".format(args.csv_filename_prefix, \
+                        episode - args.checkpoint_frequency))
 
 
 if __name__ == '__main__':
@@ -167,7 +173,10 @@ if __name__ == '__main__':
     session.run(tf.global_variables_initializer())
 
     # init statistics. NOTE: simple tag specific!
-    statistics_header = ["epoch", "reward_0", "reward_1", "loss_0", "loss_1"]
+    statistics_header = ["epoch"]
+    statistics_header.extend(["reward_{}".format(i) for i in range(env.n)])
+    statistics_header.extend(["loss_{}".format(i) for i in range(env.n)])
+    print("Collecting statistics {}:".format(" ".join(statistics_header)))
     statistics = general_utilities.Time_Series_Statistics_Store(
         statistics_header)
 
