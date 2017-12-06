@@ -207,7 +207,7 @@ class MultiAgentEnv(gym.Env):
         self.render_geoms_xform = None
 
     # render environment
-    def _render(self, mode='human', close=True):
+    def _render(self, mode='rgb_array', close=True):
         if mode == 'human':
             alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
             message = ''
