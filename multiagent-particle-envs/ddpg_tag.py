@@ -113,8 +113,9 @@ if __name__ == '__main__':
         state = tf.placeholder(tf.float32, shape=[None, state_size])
         reward = tf.placeholder(tf.float32, [None, 1])
         state_next = tf.placeholder(tf.float32, shape=[None, state_size])
+        speed = 0.9 if env.agents[i].adversary else 1
 
-        actors.append(Actor('actor' + str(i), session, n_action, 1,
+        actors.append(Actor('actor' + str(i), session, n_action, speed,
                             state, state_next))
         critics.append(Critic('critic' + str(i), session, n_action,
                               actors[i].eval_actions, actors[i].target_actions,

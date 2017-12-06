@@ -20,8 +20,6 @@ BATCH_SIZE = 64
 
 def play():
     states = env.reset()
-    speed = 0.1
-
     for episode in range(args.episodes):
         # render
         if args.render:
@@ -32,9 +30,10 @@ def play():
         actions_onehot = []
         for i in range(env.n):
             action = dqns[i].choose_action(states[i])
+            speed = 0.9 if env.agents[i].adversary else 1
 
             onehot_action = np.zeros(n_actions[i])
-            onehot_action[action] = 1 * speed
+            onehot_action[action] = speed
             actions_onehot.append(onehot_action)
             actions.append(action)
 
