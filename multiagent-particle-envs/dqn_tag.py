@@ -20,6 +20,7 @@ def play(episodes, is_render, is_testing, checkpoint_interval, \
     statistics_header = ["epoch"]
     statistics_header.extend(["reward_{}".format(i) for i in range(env.n)])
     statistics_header.extend(["loss_{}".format(i) for i in range(env.n)])
+    statistics_header.extend(["eps_greedy_{}".format(i) for i in range(env.n)])
     print("Collecting statistics {}:".format(" ".join(statistics_header)))
     statistics = general_utilities.Time_Series_Statistics_Store(
         statistics_header)
@@ -72,6 +73,7 @@ def play(episodes, is_render, is_testing, checkpoint_interval, \
             statistic = [episode]
             statistic.extend([rewards[i] for i in range(env.n)])
             statistic.extend([losses[i] for i in range(env.n)])
+            statistic.extend([dqns[i].eps_greedy for i in range(env.n)])
             statistics.add_statistics(statistic)
             if episode % 25 == 0:
                 print('Episode: ', episode, ' Rewards: ', rewards)
