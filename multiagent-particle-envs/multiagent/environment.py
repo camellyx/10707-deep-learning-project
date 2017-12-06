@@ -140,7 +140,7 @@ class MultiAgentEnv(gym.Env):
     def _get_done(self, agent):
         if self.done_callback is None:
             return False
-        return self.observation_callback(agent, self.world)
+        return self.done_callback(agent, self.world)
 
     # get reward for a particular agent
     def _get_reward(self, agent):
@@ -282,7 +282,7 @@ class MultiAgentEnv(gym.Env):
             results.append(self.viewers[i].render(
                 return_rgb_array=mode == 'rgb_array'))
 
-        return results
+        return results[0]
 
     # create receptor field locations in local coordinate frame
     def _make_receptor_locations(self, agent):
@@ -351,7 +351,7 @@ class BatchMultiAgentEnv(gym.Env):
         return obs_n
 
     # render environment
-    def _render(self, mode='human', close=True):
+    def _render(self, mode='rgb_array', close=True):
         results_n = []
         for env in self.env_batch:
             results_n += env.render(mode, close)

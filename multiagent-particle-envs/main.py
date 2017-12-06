@@ -10,6 +10,7 @@ import time
 import os
 import pickle as pk
 from collections import namedtuple
+from collections import deque
 import code
 
 from make_env import make_env
@@ -19,7 +20,7 @@ import numpy as np
 import gym
 
 from keras.models import Sequential
-from keras.layers import Dense, Activation, Flatten, Convolution2D, Permute
+from keras.layers import Dense, Activation, Flatten, Convolution2D, Permute, Dropout
 from keras.optimizers import Adam
 import keras.backend as K
 from keras.models import load_model
@@ -36,6 +37,7 @@ class Agent(object):
     def __init__(self):
         self.training = True
         self.step = 1
+        self.epoch = 1
 
 
 def fill_memory(options, env, memories):
@@ -73,14 +75,15 @@ def main():
     parser.add_argument('--env', default='simple_tag', type=str)
     parser.add_argument('--folder', default='', type=str)
     parser.add_argument('--gamma', default=.9, type=float)
-    parser.add_argument('--learning_rate', default=1e-2, type=float)
-    parser.add_argument('--movement_rate', default=1., type=float)
-    parser.add_argument('--batch_size', default=128, type=int)
+    parser.add_argument('--learning_rate', default=1e-3, type=float)
+    parser.add_argument('--movement_rate', default=.5, type=float)
+    parser.add_argument('--batch_size', default=64, type=int)
     parser.add_argument('--train_episodes', default=1e6, type=int)
-    parser.add_argument('--copy_interval', default=1e3, type=int)
+    parser.add_argument('--copy_interval', default=1e4, type=int)
     parser.add_argument('--linear_size', default=50, type=int)
-    parser.add_argument('--memory_size', default=100000, type=int)
+    parser.add_argument('--memory_size', default=10000, type=int)
     parser.add_argument('--window_length', default=1, type=int)
+    parser.add_argument('--stats_window', default=100, type=int)
     parser.add_argument('--render', default=False,
                         action="store_true")
     parser.add_argument('--benchmark', default=False,
@@ -120,7 +123,7 @@ def main():
             model = Sequential()
             model.add(Dense(options.linear_size, activation='relu',
                             input_shape=(n_states[n],)))
-            # model.add(Dense(options.linear_size, activation='relu'))
+            model.add(Dense(options.linear_size, activation='relu'))
             model.add(Dense(n_actions[n], activation='linear'))
             model.compile(optimizer=Adam(
                 lr=options.learning_rate), loss='mse', metrics=['mae'])
@@ -144,12 +147,21 @@ def main():
 
     fill_memory(options, env, memories)
 
-    epoch = 1
+    epoch = agent.epoch
     last_epoch_step = 0
     state = env.reset()
     tot_reward = np.zeros(env.n)
+    reward_window = deque(maxlen=options.stats_window)
+    loss_window = deque(maxlen=options.stats_window * len(n_actions))
+    my_history = []
+    filename = options.folder + "/history.pk"
+    if os.path.isfile(filename):
+        with open(filename, 'rb') as f:
+            my_history = pk.load(f)
+
     for step in itertools.count(agent.step):
         agent.step = step
+        agent.epoch = epoch
         if epoch >= options.train_episodes:
             break
         if options.render:
@@ -185,16 +197,15 @@ def main():
             memories[role].append(state[i], actions[i], reward[i], done[i])
 
         losses = []
-        my_history = []
         for role in range(len(n_actions)):
             experiences = memories[role].sample(options.batch_size)
 
             # Start by extracting the necessary parameters (we use a
             # vectorized implementation).
             state0_batch = []
+            state1_batch = []
             reward_batch = []
             action_batch = []
-            state1_batch = []
             for e in experiences:
                 state0_batch.append(e.state0[0])
                 state1_batch.append(e.state1[0])
@@ -209,19 +220,23 @@ def main():
             target_q_values = target_models[role].predict(
                 state1_batch, batch_size=options.batch_size)
             q_batch = np.max(target_q_values, axis=1).flatten()
+            target_q_values = target_models[role].predict(
+                state0_batch, batch_size=options.batch_size)
 
             discounted_reward_batch = options.gamma * q_batch
             Rs = reward_batch + discounted_reward_batch
-            for idx, (target, R, action) in enumerate(zip(target_q_values, Rs, action_batch)):
-                target[action] = R
+            target_q_values[range(len(action_batch)), action] = Rs
+            # for idx, (target, R, action) in enumerate(zip(target_q_values, Rs, action_batch)):
+            #     target[action] = R
+
             history = models[role].fit(state0_batch, target_q_values,
                                        batch_size=options.batch_size, verbose=0)
-            losses.append(history.history['loss'][-1])
-            my_history.append(history.history)
+            losses.append(np.mean(history.history['loss']))
+            loss_window.append(losses)
 
         # if step % 100 == 0:
         #     print(epoch, step, losses)
-        if step % 1000 == 0:
+        if step % 10000 == 0:
             for n in range(len(n_actions)):
                 filename = options.folder + "/model_" + str(n) + ".h5"
                 models[n].save(filename)
@@ -233,13 +248,13 @@ def main():
                 pk.dump(my_history, f)
 
         if any(done) or step - last_epoch_step > 100:
-            if any(done):
-                print("done! in", step - last_epoch_step, "steps")
-            if epoch % 10 == 0:
-                print(epoch, step, losses, tot_reward.tolist())
             state = env.reset()
             epoch += 1
             last_epoch_step = step
+            reward_window.append(np.sum(tot_reward))
+            my_history.append([np.mean(loss_window), np.mean(reward_window)])
+            if epoch % 10 == 0:
+                print(epoch, step, my_history[-1])
             tot_reward = np.zeros(env.n)
 
 
