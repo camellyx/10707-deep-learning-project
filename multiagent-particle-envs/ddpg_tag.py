@@ -16,11 +16,22 @@ from make_env import make_env
 import general_utilities
 
 
-def play():
+def play(episodes, is_render, is_testing, checkpoint_interval, \
+        weights_filename_prefix, csv_filename_prefix, batch_size):
+    # init statistics. NOTE: simple tag specific!
+    statistics_header = ["epoch"]
+    statistics_header.extend(["reward_{}".format(i) for i in range(env.n)])
+    statistics_header.extend(["loss_{}".format(i) for i in range(env.n)])
+    print("Collecting statistics {}:".format(" ".join(statistics_header)))
+    statistics = general_utilities.Time_Series_Statistics_Store(
+        statistics_header)
+
     states = env.reset()
-    for episode in range(args.episodes):
+    speed = 0.1
+
+    for episode in range(episodes):
         # render
-        if args.render:
+        if is_render:
             env.render()
 
         # act
@@ -34,11 +45,11 @@ def play():
         states_next, rewards, done, info = env.step(actions)
 
         # learn
-        if not args.testing:
+        if not is_testing:
             losses = []
             size = memories[0].pointer
-            batch = random.sample(range(size), size) if size < args.batch_size else random.sample(
-                range(size), args.batch_size)
+            batch = random.sample(range(size), size) if size < batch_size else random.sample(
+                range(size), batch_size)
 
             for i in range(env.n):
                 if done[i]:
@@ -47,9 +58,9 @@ def play():
                 memories[i].remember(states[i], actions[i],
                                      rewards[i], states_next[i], done[i])
 
-                if memories[i].pointer > args.batch_size * 10:
+                if memories[i].pointer > batch_size * 10:
                     s, a, r, sn, _ = memories[i].sample(batch)
-                    r = np.reshape(r, (args.batch_size, 1))
+                    r = np.reshape(r, (batch_size, 1))
                     critics[i].learn(s, a, r, sn)
                     actors[i].learn(s)
                     # TODO: losses.append(history.history["loss"][0])
@@ -71,15 +82,15 @@ def play():
         if any(done):
             states = env.reset()
 
-        if episode % args.checkpoint_frequency == 0:
-            statistics.dump("{}_{}.csv".format(args.csv_filename_prefix, episode))
+        if episode % checkpoint_interval == 0:
+            statistics.dump("{}_{}.csv".format(csv_filename_prefix, episode))
             general_utilities.save_dqn_weights(critics,
-                                               args.weights_filename_prefix + "critic_")
+                                               weights_filename_prefix + "critic_")
             general_utilities.save_dqn_weights(actors,
-                                               args.weights_filename_prefix + "actor_")
-            if episode >= args.checkpoint_frequency:
-                os.remove("{}_{}.csv".format(args.csv_filename_prefix, \
-                        episode - args.checkpoint_frequency))
+                                               weights_filename_prefix + "actor_")
+            if episode >= checkpoint_interval:
+                os.remove("{}_{}.csv".format(csv_filename_prefix, \
+                        episode - checkpoint_interval))
 
 
 if __name__ == '__main__':
@@ -106,14 +117,6 @@ if __name__ == '__main__':
     parser.add_argument('--batch_size', default=64, type=int)
 
     args = parser.parse_args()
-    args.weights_filename_prefix = args.experiment_prefix + args.weights_filename_prefix
-    args.csv_filename_prefix = args.experiment_prefix + args.csv_filename_prefix
-    if not os.path.exists(args.experiment_prefix):
-        os.makedirs(args.experiment_prefix)
-    if not os.path.exists(args.weights_filename_prefix):
-        os.makedirs(args.weights_filename_prefix)
-    if not os.path.exists(args.csv_filename_prefix):
-        os.makedirs(args.csv_filename_prefix)
 
     general_utilities.dump_dict_as_json(vars(args),
                                         args.experiment_prefix + "/save/run_parameters.json")
@@ -172,23 +175,20 @@ if __name__ == '__main__':
 
     session.run(tf.global_variables_initializer())
 
-    # init statistics. NOTE: simple tag specific!
-    statistics_header = ["epoch"]
-    statistics_header.extend(["reward_{}".format(i) for i in range(env.n)])
-    statistics_header.extend(["loss_{}".format(i) for i in range(env.n)])
-    print("Collecting statistics {}:".format(" ".join(statistics_header)))
-    statistics = general_utilities.Time_Series_Statistics_Store(
-        statistics_header)
 
     general_utilities.load_dqn_weights_if_exist(
-        actors, args.weights_filename_prefix + "actor_", ".h5.index")
+        actors, args.experiment_prefix + args.weights_filename_prefix + "actor_", ".h5.index")
     general_utilities.load_dqn_weights_if_exist(
-        critics, args.weights_filename_prefix + "critic_", ".h5.index")
+        critics, args.experiment_prefix + args.weights_filename_prefix + "critic_", ".h5.index")
 
     start_time = time.time()
 
     # play
-    play()
+    statistics = play(args.episodes, args.render, args.testing,
+            args.checkpoint_frequency,
+            args.experiment_prefix + args.weights_filename_prefix,
+            args.experiment_prefix + args.csv_filename_prefix,
+            args.batch_size)
 
     # bookkeeping
     print("Finished {} episodes in {} seconds".format(args.episodes,

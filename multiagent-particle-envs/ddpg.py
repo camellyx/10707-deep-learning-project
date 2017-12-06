@@ -1,6 +1,9 @@
 import numpy as np
 import tensorflow as tf
 import os
+import pathlib
+
+import general_utilities
 
 
 class Actor:
@@ -151,6 +154,8 @@ class Critic:
             self.saver.restore(self.session, latest_ckpt)
 
     def save(self, name):
-        if not os.path.exists(name):
-            os.makedirs(name)
+        p = pathlib.Path(name)
+        if len(p.parts) > 1:
+            dump_dirs = pathlib.Path(*p.parts[:-1])
+            general_utilities.ensure_directory_exists(str(dump_dirs))
         save_path = self.saver.save(self.session, name)
