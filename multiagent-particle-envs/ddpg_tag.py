@@ -55,7 +55,7 @@ def play():
 
         # act
         actions = []
-        for i in range(env.env.n):
+        for i in range(env.n):
             action = np.clip(
                 actors[i].choose_action(states[i]) + actors_noise[i](), -2, 2)
             actions.append(action)
@@ -70,7 +70,7 @@ def play():
             batch = random.sample(range(size), size) if size < BATCH_SIZE else random.sample(
                 range(size), BATCH_SIZE)
 
-            for i in range(env.env.n):
+            for i in range(env.n):
                 if done[i]:
                     rewards[i] *= 100
 
@@ -125,17 +125,17 @@ if __name__ == '__main__':
 
     # init env
     env = make_env(args.env, args.benchmark)
-    if not os.path.exists(args.video_dir):
-        os.makedirs(args.video_dir)
-    args.video_dir = os.path.join(
-        args.video_dir, 'monitor-' + time.strftime("%y-%m-%d-%H-%M"))
-    if not os.path.exists(args.video_dir):
-        os.makedirs(args.video_dir)
-    env = MyMonitor(env, args.video_dir,
-                    # resume=True, write_upon_reset=True,
-                    video_callable=lambda episode: (
-                        episode + 1) % args.video_interval == 0,
-                    force=True)
+    # if not os.path.exists(args.video_dir):
+    #     os.makedirs(args.video_dir)
+    # args.video_dir = os.path.join(
+    #     args.video_dir, 'monitor-' + time.strftime("%y-%m-%d-%H-%M"))
+    # if not os.path.exists(args.video_dir):
+    #     os.makedirs(args.video_dir)
+    # env = MyMonitor(env, args.video_dir,
+    #                 # resume=True, write_upon_reset=True,
+    #                 video_callable=lambda episode: (
+    #                     episode + 1) % args.video_interval == 0,
+    #                 force=True)
 
     # set random seed
     env.seed(args.random_seed)
@@ -155,9 +155,9 @@ if __name__ == '__main__':
     critics = []
     actors_noise = []
     memories = []
-    for i in range(env.env.n):
+    for i in range(env.n):
         n_actions.append(env.action_space[i].n)
-        state_sizes.append(env.env.observation_space[i].shape[0])
+        state_sizes.append(env.observation_space[i].shape[0])
         states_placeholder.append(tf.placeholder(
             tf.float32, shape=[None, state_sizes[i]]))
         rewards_placeholder.append(tf.placeholder(tf.float32, [None, 1]))
