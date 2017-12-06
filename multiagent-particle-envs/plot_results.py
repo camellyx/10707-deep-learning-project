@@ -71,14 +71,11 @@ if __name__ == "__main__":
     if args.loss or args.error or args.perplexity or args.reward or args.cum_reward:
         selected = []
         if args.loss:
-            selected.append("loss_0")
-            selected.append("loss_1")
+            selected.extend([k for k in df.keys() if "loss" in k])
         if args.reward:
-            selected.append("reward_0")
-            selected.append("reward_1")
+            selected.extend([k for k in df.keys() if "reward" in k])
         if args.cum_reward:
-            selected.append("cum_reward_0")
-            selected.append("cum_reward_1")
+            selected.extend([k for k in df.keys() if "cum_reward" in k])
         if args.error:
             selected.append("validation_error")
             selected.append("train_error")
