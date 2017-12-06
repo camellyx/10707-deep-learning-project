@@ -38,7 +38,7 @@ def play(episodes, is_render, is_testing, checkpoint_interval,
         actions = []
         actions_onehot = []
         for i in range(env.n):
-            action = dqns[i].choose_action(states[i])
+            action = dqns[idx_mapping[i]].choose_action(states[i])
 
             onehot_action = np.zeros(n_actions[i])
             onehot_action[action] = 1 * speed
@@ -51,7 +51,7 @@ def play(episodes, is_render, is_testing, checkpoint_interval,
         # learn
         if not is_testing:
             losses = []
-            size = memories[0].pointer
+            size = min(memories[0].pointer, memories[1].pointer)
             batch = random.sample(range(size), size) if size < batch_size else random.sample(
                 range(size), batch_size)
 
@@ -59,11 +59,11 @@ def play(episodes, is_render, is_testing, checkpoint_interval,
                 if done[i]:
                     rewards[i] *= 100
 
-                memories[i].remember(states[i], actions[i],
+                memories[idx_mapping[i]].remember(states[i], actions[i],
                                      rewards[i], states_next[i], done[i])
 
-                if memories[i].pointer > batch_size * 10:
-                    history = dqns[i].learn(*memories[i].sample(batch))
+                if memories[idx_mapping[i]].pointer > batch_size * 10:
+                    history = dqns[i].learn(*memories[idx_mapping[i]].sample(batch))
                     losses.append(history.history["loss"][0])
                 else:
                     losses.append(-1)
@@ -85,11 +85,11 @@ def play(episodes, is_render, is_testing, checkpoint_interval,
 
         if episode % checkpoint_interval == 0:
             statistics.dump(
-                "{}/episode_{}.csv".format(args.csv_filename_prefix, episode))
+                "{}/episode_{}.csv".format(csv_filename_prefix, episode))
             general_utilities.save_dqn_weights(dqns,
-                                               "{}/episode_{}_".format(args.weights_filename_prefix, episode))
+                                               "{}/episode_{}_".format(weights_filename_prefix, episode))
         if episode >= args.checkpoint_frequency:
-            os.remove("{}_{}.csv".format(args.csv_filename_prefix,
+            os.remove("{}_{}.csv".format(csv_filename_prefix,
                                          episode - args.checkpoint_frequency))
 
     return statistics
@@ -115,12 +115,15 @@ if __name__ == '__main__':
     parser.add_argument('--random_seed', default=2, type=int)
     parser.add_argument('--memory_size', default=10000, type=int)
     parser.add_argument('--batch_size', default=64, type=int)
+    parser.add_argument('--shared_weight', default=False, action="store_true")
 
     args = parser.parse_args()
     args.experiment_prefix = os.path.join(args.experiment_prefix, "dqn")
     args.experiment_prefix = os.path.join(args.experiment_prefix, args.env)
     args.experiment_prefix = os.path.join(
         args.experiment_prefix, 'exp-' + time.strftime("%y-%m-%d-%H-%M"))
+    if args.shared_weight:
+        args.experiment_prefix = os.path.join(args.experiment_prefix, 'shared_weight')
     if args.weights_filename_prefix == "":
         args.weights_filename_prefix = os.path.join(
             args.experiment_prefix, "weights/")
@@ -149,9 +152,23 @@ if __name__ == '__main__':
     state_sizes = [env.observation_space[i].shape[0] for i in range(env.n)]
 
     # Memory: state initial, state final, action, reward, done
-    memories = [Memory(args.memory_size, 2 * state_sizes[i] + 3)
-                for i in range(env.n)]
-    dqns = [DQN(n_actions[i], state_sizes[i]) for i in range(env.n)]
+    idx_mapping = {}  # mapping from agent idx to network/memory idx
+    for i in range(env.n):
+        if env.agents[i].adversary:
+            idx_mapping[i] = 0 if args.shared_weight else i
+            adversary = i
+        else:
+            idx_mapping[i] = 1 if args.shared_weight else i
+            agent = i
+
+    if args.shared_weight:
+        memories = [Memory(args.memory_size, 2 * state_sizes[i] + 3)
+                    for i in [adversary, agent]]
+        dqns = [DQN(n_actions[i], state_sizes[i]) for i in [adversary, agent]]
+    else:
+        memories = [Memory(args.memory_size, 2 * state_sizes[i] + 3)
+                    for i in range(env.n)]
+        dqns = [DQN(n_actions[i], state_sizes[i]) for i in range(env.n)]
 
     general_utilities.load_dqn_weights_if_exist(
         dqns, args.weights_filename_prefix)
