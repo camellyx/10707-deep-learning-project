@@ -207,7 +207,7 @@ class MultiAgentEnv(gym.Env):
         self.render_geoms_xform = None
 
     # render environment
-    def _render(self, mode='human', close=True):
+    def _render(self, mode='rgb_array', close=True):
         if mode == 'human':
             alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
             message = ''
@@ -282,7 +282,7 @@ class MultiAgentEnv(gym.Env):
             results.append(self.viewers[i].render(
                 return_rgb_array=mode == 'rgb_array'))
 
-        return results
+        return results[0]
 
     # create receptor field locations in local coordinate frame
     def _make_receptor_locations(self, agent):
@@ -351,7 +351,7 @@ class BatchMultiAgentEnv(gym.Env):
         return obs_n
 
     # render environment
-    def _render(self, mode='human', close=True):
+    def _render(self, mode='rgb_array', close=True):
         results_n = []
         for env in self.env_batch:
             results_n += env.render(mode, close)

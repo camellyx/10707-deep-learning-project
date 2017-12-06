@@ -15,36 +15,6 @@ from ornstein_uhlenbeck import OrnsteinUhlenbeckActionNoise
 from make_env import make_env
 import general_utilities
 
-MEMORY_SIZE = 10000
-BATCH_SIZE = 64
-
-
-class MyMonitor(gym.wrappers.Monitor):
-
-    def _after_step(self, observation, reward, done, info):
-        if not self.enabled:
-            return done
-
-        if done and self.env_semantics_autoreset:
-            # For envs with BlockingReset wrapping VNCEnv, this observation
-            # will be the first one of the new episode
-            self._reset_video_recorder()
-            self.episode_id += 1
-            self._flush()
-
-        # Semisupervised envs modify the rewards, but we want the original when
-        # scoring
-        if info.get('true_reward', None):
-            reward = info['true_reward']
-
-        # Record stats
-        self.stats_recorder.after_step(
-            observation, np.sum(reward), any(done), info)
-        # Record video
-        self.video_recorder.capture_frame()
-
-        return done
-
 
 def play():
     states = env.reset()
@@ -67,8 +37,8 @@ def play():
         if not args.testing:
             losses = []
             size = memories[0].pointer
-            batch = random.sample(range(size), size) if size < BATCH_SIZE else random.sample(
-                range(size), BATCH_SIZE)
+            batch = random.sample(range(size), size) if size < args.batch_size else random.sample(
+                range(size), args.batch_size)
 
             for i in range(env.n):
                 if done[i]:
@@ -77,9 +47,9 @@ def play():
                 memories[i].remember(states[i], actions[i],
                                      rewards[i], states_next[i], done[i])
 
-                if memories[i].pointer > BATCH_SIZE * 10:
+                if memories[i].pointer > args.batch_size * 10:
                     s, a, r, sn, _ = memories[i].sample(batch)
-                    r = np.reshape(r, (BATCH_SIZE, 1))
+                    r = np.reshape(r, (args.batch_size, 1))
                     critics[i].learn(s, a, r, sn)
                     actors[i].learn(s)
                     # TODO: losses.append(history.history["loss"][0])
@@ -90,20 +60,20 @@ def play():
             states = states_next
 
             # collect statistics and print rewards. NOTE: simple tag specific!
-            statistics.add_statistics([episode, rewards[0], rewards[1],
-                                       losses[0], losses[1]])
-            print('Episode: ', episode, ' Rewards: ', rewards)
+            statistics.add_statistics([episode, rewards[0], rewards[-1],
+                                       losses[0], losses[-1]])
+            # print('Episode: ', episode, ' Rewards: ', rewards)
 
         # reset states if done
         if any(done):
             states = env.reset()
 
-        if episode % args.checkpoint_interval == 0:
-            statistics.dump(args.weights_filename_prefix + "/statistics-")
+        if episode % args.checkpoint_frequency == 0:
+            statistics.dump(args.csv_filename_prefix + ".csv")
             general_utilities.save_dqn_weights(critics,
-                                               args.weights_filename_prefix + "_critic_")
-            general_utilities.save_dqn_weights(critics,
-                                               args.weights_filename_prefix + "_actor_")
+                                               args.weights_filename_prefix + "critic_")
+            general_utilities.save_dqn_weights(actors,
+                                               args.weights_filename_prefix + "actor_")
 
 
 if __name__ == '__main__':
@@ -113,15 +83,34 @@ if __name__ == '__main__':
     parser.add_argument('--learning_rate', default=0.001, type=float)
     parser.add_argument('--episodes', default=100000, type=int)
     parser.add_argument('--video_interval', default=1000, type=int)
-    parser.add_argument('--checkpoint_interval', default=10000, type=int)
     parser.add_argument('--render', default=False, action="store_true")
     parser.add_argument('--benchmark', default=False, action="store_true")
-    parser.add_argument('--weights_filename_prefix', default='./save/tag-ddpg/',
+    parser.add_argument('--experiment_prefix', default=".",
+                        help="directory to store all experiment data")
+    parser.add_argument('--weights_filename_prefix', default='/save/tag-dqn',
                         help="where to store/load network weights")
+    parser.add_argument('--csv_filename_prefix', default='/save/statistics-dqn',
+                        help="where to store statistics")
+    parser.add_argument('--checkpoint_frequency', default=500, type=int,
+                        help="how often to checkpoint")
     parser.add_argument('--testing', default=False, action="store_true",
                         help="reduces exploration substantially")
     parser.add_argument('--random_seed', default=2, type=int)
+    parser.add_argument('--memory_size', default=10000, type=int)
+    parser.add_argument('--batch_size', default=64, type=int)
+
     args = parser.parse_args()
+    args.weights_filename_prefix = args.experiment_prefix + args.weights_filename_prefix
+    args.csv_filename_prefix = args.experiment_prefix + args.csv_filename_prefix
+    if not os.path.exists(args.experiment_prefix):
+        os.makedirs(args.experiment_prefix)
+    if not os.path.exists(args.weights_filename_prefix):
+        os.makedirs(args.weights_filename_prefix)
+    if not os.path.exists(args.csv_filename_prefix):
+        os.makedirs(args.csv_filename_prefix)
+
+    general_utilities.dump_dict_as_json(vars(args),
+                                        args.experiment_prefix + "/save/run_parameters.json")
 
     # init env
     env = make_env(args.env, args.benchmark)
@@ -173,7 +162,7 @@ if __name__ == '__main__':
         actors_noise.append(OrnsteinUhlenbeckActionNoise(
             mu=np.zeros(n_actions[i])))
         memories.append(
-            Memory(MEMORY_SIZE, 2 * state_sizes[i] + n_actions[i] + 2))
+            Memory(args.memory_size, env.n * state_sizes[i] + n_actions[i] + 2))
 
     session.run(tf.global_variables_initializer())
 
@@ -183,9 +172,9 @@ if __name__ == '__main__':
         statistics_header)
 
     general_utilities.load_dqn_weights_if_exist(
-        actors, args.weights_filename_prefix + "_actor_")
+        actors, args.weights_filename_prefix + "actor_", ".h5.index")
     general_utilities.load_dqn_weights_if_exist(
-        critics, args.weights_filename_prefix + "_ctritic_")
+        critics, args.weights_filename_prefix + "critic_", ".h5.index")
 
     start_time = time.time()
 
@@ -196,4 +185,8 @@ if __name__ == '__main__':
     print("Finished {} episodes in {} seconds".format(args.episodes,
                                                       time.time() - start_time))
     tf.summary.FileWriter("options.weights_filename_prefix", session.graph)
-    statistics.dump("./save/statistics-ddpg.csv")
+    general_utilities.save_dqn_weights(critics,
+                                       args.weights_filename_prefix + "critic_")
+    general_utilities.save_dqn_weights(actors,
+                                       args.weights_filename_prefix + "actor_")
+    statistics.dump(args.csv_filename_prefix + ".csv")

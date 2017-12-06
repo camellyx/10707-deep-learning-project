@@ -1,5 +1,6 @@
 import numpy as np
 import tensorflow as tf
+import os
 
 
 class Actor:
@@ -64,11 +65,15 @@ class Actor:
                                 feed_dict={self.eval_states: state[np.newaxis, :]})[0]
 
     def load(self, name):
-        self.saver.restore(self.session, name)
+        latest_ckpt = tf.train.latest_checkpoint(name)
+        if latest_ckpt:
+            print("Loading model from checkpoint {}".format(latest_ckpt))
+            self.saver.restore(self.session, latest_ckpt)
 
     def save(self, name):
+        if not os.path.exists(name):
+            os.makedirs(name)
         save_path = self.saver.save(self.session, name)
-        print("Model saved in file: %s" % save_path)
 
 
 class Critic:
@@ -140,8 +145,12 @@ class Critic:
         self.session.run(self.update_target)
 
     def load(self, name):
-        self.saver.restore(self.session, name)
+        latest_ckpt = tf.train.latest_checkpoint(name)
+        if latest_ckpt:
+            print("Loading model from checkpoint {}".format(latest_ckpt))
+            self.saver.restore(self.session, latest_ckpt)
 
     def save(self, name):
+        if not os.path.exists(name):
+            os.makedirs(name)
         save_path = self.saver.save(self.session, name)
-        print("Model saved in file: %s" % save_path)
