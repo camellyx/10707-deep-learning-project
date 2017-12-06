@@ -1,6 +1,7 @@
 import csv
 import errno
 import os
+import pathlib
 def ensure_directory_exists(base_directory):
     """
     Makes a directory if it does not exist
@@ -26,7 +27,10 @@ def save_dqn_weights(dqns, weights_filename_prefix, weights_filename_extension="
     """
     Saves weights
     """
-    ensure_directory_exists(os.path.splitext(weights_filename_prefix)[0])
+    p = pathlib.Path(weights_filename_prefix)
+    if len(p.parts) > 1:
+        dump_dirs = pathlib.Path(*p.parts[:-1])
+        ensure_directory_exists(dump_dirs)
     for i, dqn in enumerate(dqns):
         dqn_filename = weights_filename_prefix + str(i) + weights_filename_extension
         dqn.save(dqn_filename)
@@ -49,7 +53,10 @@ class Time_Series_Statistics_Store(object):
             raise ValueError("Data length does not match header")
         self.statistics.append(data)
     def dump(self, dump_filename="statistics.csv"):
-        ensure_directory_exists(os.path.splitext(dump_filename)[0])
+        p = pathlib.Path(dump_filename)
+        if len(p.parts) > 1:
+            dump_dirs = pathlib.Path(*p.parts[:-1])
+            ensure_directory_exists(dump_dirs)
         with open(dump_filename, "w") as csvfile:
             wr = csv.writer(csvfile)
             wr.writerow(self.header)
