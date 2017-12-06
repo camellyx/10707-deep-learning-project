@@ -32,7 +32,7 @@ def save_dqn_weights(dqns, weights_filename_prefix, weights_filename_extension="
     p = pathlib.Path(weights_filename_prefix)
     if len(p.parts) > 1:
         dump_dirs = pathlib.Path(*p.parts[:-1])
-        ensure_directory_exists(dump_dirs)
+        ensure_directory_exists(str(dump_dirs))
     for i, dqn in enumerate(dqns):
         dqn_filename = weights_filename_prefix + str(i) + weights_filename_extension
         dqn.save(dqn_filename)
@@ -41,7 +41,7 @@ def dump_dict_as_json(dict_to_dump, filename):
     p = pathlib.Path(filename)
     if len(p.parts) > 1:
         dump_dirs = pathlib.Path(*p.parts[:-1])
-        ensure_directory_exists(dump_dirs)
+        ensure_directory_exists(str(dump_dirs))
     json_str = json.dumps(dict_to_dump)
     with open(filename, "w") as jsonfile:
         jsonfile.write(json_str)
@@ -67,7 +67,7 @@ class Time_Series_Statistics_Store(object):
         p = pathlib.Path(dump_filename)
         if len(p.parts) > 1:
             dump_dirs = pathlib.Path(*p.parts[:-1])
-            ensure_directory_exists(dump_dirs)
+            ensure_directory_exists(str(dump_dirs))
         with open(dump_filename, "w") as csvfile:
             wr = csv.writer(csvfile)
             wr.writerow(self.header)
