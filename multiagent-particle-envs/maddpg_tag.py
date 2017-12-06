@@ -8,6 +8,7 @@ import os
 import pickle
 import code
 import random
+from functools import reduce
 
 from ddpg import Actor, Critic
 from memory import Memory
@@ -52,14 +53,18 @@ def play():
                 if done[i]:
                     rewards[i] *= 100
 
-                memories[i].remember(states[i], actions[i],
-                                     rewards[i], states_next[i], done[i])
+                memories[i].remember(np.concatenate(states, axis=0),
+                                     np.concatenate(actions, axis=0),
+                                     rewards[i],
+                                     np.concatenate(states_next, axis=0), done[i])
 
                 if memories[i].pointer > BATCH_SIZE * 10:
                     s, a, r, sn, _ = memories[i].sample(batch)
                     r = np.reshape(r, (BATCH_SIZE, 1))
                     critics[i].learn(s, a, r, sn)
-                    actors[i].learn(s)
+                    start = 0 if i == 0 else reduce((lambda x, y: x + y),
+                                                    [states[j].shape[0] for j in range(i)])
+                    actors[i].learn(s[:, start: start + states[i].shape[0]])
                     # TODO: losses.append(history.history["loss"][0])
                     losses.append(0)
                 else:
@@ -103,26 +108,44 @@ if __name__ == '__main__':
     # init actors and critics
     session = tf.Session()
 
+    n_actions = 0
+    state_sizes = 0
     actors = []
-    critics = []
     actors_noise = []
     memories = []
+    eval_actions = []
+    target_actions = []
     for i in range(env.n):
         n_action = env.action_space[i].n
         state_size = env.observation_space[i].shape[0]
         state = tf.placeholder(tf.float32, shape=[None, state_size])
-        reward = tf.placeholder(tf.float32, [None, 1])
         state_next = tf.placeholder(tf.float32, shape=[None, state_size])
 
         actors.append(Actor('actor' + str(i), session, n_action, 1,
                             state, state_next))
-        critics.append(Critic('critic' + str(i), session, n_action,
-                              actors[i].eval_actions, actors[i].target_actions,
-                              state_size, state, state_next, reward))
-        actors[i].add_gradients(critics[i].action_gradients)
         actors_noise.append(OrnsteinUhlenbeckActionNoise(
             mu=np.zeros(n_action)))
         memories.append(Memory(MEMORY_SIZE))
+
+        n_actions += n_action
+        state_sizes += state_size
+        eval_actions.append(actors[i].eval_actions)
+        target_actions.append(actors[i].target_actions)
+
+    critics = []
+    eval_actions = tf.concat(eval_actions, 1)
+    target_actions = tf.concat(target_actions, 1)
+    for i in range(env.n):
+        n_action = env.action_space[i].n
+        state = tf.placeholder(tf.float32, shape=[None, state_sizes])
+        state_next = tf.placeholder(tf.float32, shape=[None, state_sizes])
+        reward = tf.placeholder(tf.float32, [None, 1])
+
+        critics.append(Critic('critic' + str(i), session, n_actions,
+                              eval_actions, target_actions, state_sizes,
+                              state, state_next, reward))
+        actors[i].add_gradients(
+            critics[i].action_gradients[:, i * n_action: (i + 1) * n_action])
 
     session.run(tf.global_variables_initializer())
 

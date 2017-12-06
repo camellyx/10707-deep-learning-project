@@ -4,7 +4,7 @@ from collections import deque
 
 
 class Memory:
-    def __init__(self, capacity, dimension):
+    def __init__(self, capacity):
         self.data = deque(maxlen=capacity)
         self.pointer = 0
 
