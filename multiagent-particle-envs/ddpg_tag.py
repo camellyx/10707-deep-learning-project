@@ -19,6 +19,33 @@ MEMORY_SIZE = 10000
 BATCH_SIZE = 64
 
 
+class MyMonitor(gym.wrappers.Monitor):
+
+    def _after_step(self, observation, reward, done, info):
+        if not self.enabled:
+            return done
+
+        if done and self.env_semantics_autoreset:
+            # For envs with BlockingReset wrapping VNCEnv, this observation
+            # will be the first one of the new episode
+            self._reset_video_recorder()
+            self.episode_id += 1
+            self._flush()
+
+        # Semisupervised envs modify the rewards, but we want the original when
+        # scoring
+        if info.get('true_reward', None):
+            reward = info['true_reward']
+
+        # Record stats
+        self.stats_recorder.after_step(
+            observation, np.sum(reward), any(done), info)
+        # Record video
+        self.video_recorder.capture_frame()
+
+        return done
+
+
 def play():
     states = env.reset()
     for episode in range(args.episodes):
@@ -71,12 +98,22 @@ def play():
         if any(done):
             states = env.reset()
 
+        if episode % args.checkpoint_interval == 0:
+            statistics.dump(args.weights_filename_prefix + "/statistics-")
+            general_utilities.save_dqn_weights(critics,
+                                               args.weights_filename_prefix + "_critic_")
+            general_utilities.save_dqn_weights(critics,
+                                               args.weights_filename_prefix + "_actor_")
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--env', default='simple_tag_guided', type=str)
+    parser.add_argument('--video_dir', default='videos/', type=str)
     parser.add_argument('--learning_rate', default=0.001, type=float)
     parser.add_argument('--episodes', default=100000, type=int)
+    parser.add_argument('--video_interval', default=1000, type=int)
+    parser.add_argument('--checkpoint_interval', default=10000, type=int)
     parser.add_argument('--render', default=False, action="store_true")
     parser.add_argument('--benchmark', default=False, action="store_true")
     parser.add_argument('--weights_filename_prefix', default='./save/tag-ddpg/',
@@ -88,6 +125,17 @@ if __name__ == '__main__':
 
     # init env
     env = make_env(args.env, args.benchmark)
+    # if not os.path.exists(args.video_dir):
+    #     os.makedirs(args.video_dir)
+    # args.video_dir = os.path.join(
+    #     args.video_dir, 'monitor-' + time.strftime("%y-%m-%d-%H-%M"))
+    # if not os.path.exists(args.video_dir):
+    #     os.makedirs(args.video_dir)
+    # env = MyMonitor(env, args.video_dir,
+    #                 # resume=True, write_upon_reset=True,
+    #                 video_callable=lambda episode: (
+    #                     episode + 1) % args.video_interval == 0,
+    #                 force=True)
 
     # set random seed
     env.seed(args.random_seed)
@@ -133,6 +181,12 @@ if __name__ == '__main__':
     statistics_header = ["epoch", "reward_0", "reward_1", "loss_0", "loss_1"]
     statistics = general_utilities.Time_Series_Statistics_Store(
         statistics_header)
+
+    general_utilities.load_dqn_weights_if_exist(
+        actors, args.weights_filename_prefix + "_actor_")
+    general_utilities.load_dqn_weights_if_exist(
+        critics, args.weights_filename_prefix + "_ctritic_")
+
     start_time = time.time()
 
     # play

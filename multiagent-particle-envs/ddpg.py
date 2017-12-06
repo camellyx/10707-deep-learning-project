@@ -3,6 +3,7 @@ import tensorflow as tf
 
 
 class Actor:
+
     def __init__(self, scope, session, n_actions, action_bound,
                  eval_states, target_states, learning_rate=0.001, tau=0.01):
         self.session = session
@@ -25,6 +26,8 @@ class Actor:
 
         self.update_target = [tf.assign(t, (1 - tau) * t + tau * e)
                               for t, e in zip(self.target_weights, self.eval_weights)]
+
+        self.saver = tf.train.Saver()
 
     def build_network(self, x, scope, trainable):
         with tf.variable_scope(scope):
@@ -60,8 +63,16 @@ class Actor:
         return self.session.run(self.eval_actions,
                                 feed_dict={self.eval_states: state[np.newaxis, :]})[0]
 
+    def load(self, name):
+        self.saver.restore(self.session, name)
+
+    def save(self, name):
+        save_path = self.saver.save(self.session, name)
+        print("Model saved in file: %s" % save_path)
+
 
 class Critic:
+
     def __init__(self, scope, session, n_actions, actor_eval_actions,
                  actor_target_actions, state_size, eval_states, target_states,
                  rewards, learning_rate=0.001, gamma=0.9, tau=0.01):
@@ -99,6 +110,8 @@ class Critic:
         self.update_target = [tf.assign(t, (1 - tau) * t + tau * e)
                               for t, e in zip(self.target_weights, self.eval_weights)]
 
+        self.saver = tf.train.Saver()
+
     def build_network(self, x1, x2, scope, trainable):
         with tf.variable_scope(scope):
             W = tf.random_normal_initializer(0.0, 0.1)
@@ -125,3 +138,10 @@ class Critic:
                                                    self.rewards: rewards,
                                                    self.target_states: states_next})
         self.session.run(self.update_target)
+
+    def load(self, name):
+        self.saver.restore(self.session, name)
+
+    def save(self, name):
+        save_path = self.saver.save(self.session, name)
+        print("Model saved in file: %s" % save_path)
