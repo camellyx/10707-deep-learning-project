@@ -103,6 +103,7 @@ if __name__ == '__main__':
     parser.add_argument('--random_seed', default=2, type=int)
     args = parser.parse_args()
 
+    general_utilities.dump_dict_as_json(vars(args), "./save/run_parameters.json")
     # init env
     env = make_env(args.env, args.benchmark)
 
