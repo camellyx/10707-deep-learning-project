@@ -63,13 +63,12 @@ class Actor:
 
 class Critic:
     def __init__(self, scope, session, n_actions, actor_eval_actions,
-                 actor_target_actions, state_size, eval_states, target_states,
+                 actor_target_actions, eval_states, target_states,
                  rewards, learning_rate=0.001, gamma=0.9, tau=0.01):
         self.session = session
         self.n_actions = n_actions
         self.actor_eval_actions = actor_eval_actions
         self.actor_target_actions = actor_target_actions
-        self.state_size = state_size
         self.eval_states = eval_states
         self.target_states = target_states
         self.rewards = rewards

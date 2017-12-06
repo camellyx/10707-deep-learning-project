@@ -119,7 +119,7 @@ if __name__ == '__main__':
                             state, state_next))
         critics.append(Critic('critic' + str(i), session, n_action,
                               actors[i].eval_actions, actors[i].target_actions,
-                              state_size, state, state_next, reward))
+                              state, state_next, reward))
         actors[i].add_gradients(critics[i].action_gradients)
         actors_noise.append(OrnsteinUhlenbeckActionNoise(
             mu=np.zeros(n_action)))
