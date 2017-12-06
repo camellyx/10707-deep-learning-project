@@ -72,16 +72,12 @@ def play():
         if any(done):
             states = env.reset()
 
-        if episode % args.checkpoint_frequency == 0:
-            statistics.dump("{}_{}.csv".format(
-                args.csv_filename_prefix, episode))
-            with tf.Graph().as_default():
-                save_path = saver.save(session, os.path.join(
-                    args.weights_filename_prefix, "models"), global_step=episode)
-                print("saving model to {}".format(save_path))
-            if episode >= args.checkpoint_frequency:
-                os.remove("{}_{}.csv".format(args.csv_filename_prefix,
-                                             episode - args.checkpoint_frequency))
+        if (episode + 1) % args.checkpoint_frequency == 0:
+            statistics.dump(os.path.join(args.csv_filename_prefix,
+                                         "stats_{}.csv".format(episode + 1)))
+            save_path = saver.save(session, os.path.join(
+                args.weights_filename_prefix, "models"), global_step=episode + 1)
+            print("saving model to {}".format(save_path))
 
 
 if __name__ == '__main__':
@@ -202,9 +198,7 @@ if __name__ == '__main__':
     # bookkeeping
     print("Finished {} episodes in {} seconds".format(args.episodes,
                                                       time.time() - start_time))
-    tf.summary.FileWriter("options.weights_filename_prefix", session.graph)
-    general_utilities.save_dqn_weights(critics,
-                                       args.weights_filename_prefix + "critic_")
-    general_utilities.save_dqn_weights(actors,
-                                       args.weights_filename_prefix + "actor_")
-    statistics.dump(args.csv_filename_prefix + ".csv")
+    tf.summary.FileWriter(os.path.join(
+        args.experiment_prefix, "summary"), session.graph)
+    statistics.dump(os.path.join(args.csv_filename_prefix,
+                                 "stats_final.csv"))
