@@ -10,7 +10,8 @@ import code
 import random
 from functools import reduce
 
-from ddpg import Actor, Critic
+from ddpg import Actor
+from maddpg import Critic
 from memory import Memory
 from ornstein_uhlenbeck import OrnsteinUhlenbeckActionNoise
 from make_env import make_env
@@ -53,18 +54,14 @@ def play():
                 if done[i]:
                     rewards[i] *= 100
 
-                memories[i].remember(np.concatenate(states, axis=0),
-                                     np.concatenate(actions, axis=0),
-                                     rewards[i],
-                                     np.concatenate(states_next, axis=0), done[i])
+                memories[i].remember(states, actions, rewards[i],
+                                     states_next, done[i])
 
                 if memories[i].pointer > BATCH_SIZE * 10:
-                    s, a, r, sn, _ = memories[i].sample(batch)
+                    s, a, r, sn, _ = memories[i].sample(batch, env.n)
                     r = np.reshape(r, (BATCH_SIZE, 1))
                     critics[i].learn(s, a, r, sn)
-                    start = 0 if i == 0 else reduce((lambda x, y: x + y),
-                                                    [states[j].shape[0] for j in range(i)])
-                    actors[i].learn(s[:, start: start + states[i].shape[0]])
+                    actors[i].learn(s[i])
                     # TODO: losses.append(history.history["loss"][0])
                     losses.append(0)
                 else:
@@ -108,44 +105,42 @@ if __name__ == '__main__':
     # init actors and critics
     session = tf.Session()
 
-    n_actions = 0
-    state_sizes = 0
+    n_actions = []
     actors = []
     actors_noise = []
     memories = []
     eval_actions = []
     target_actions = []
+    state_placeholders = []
+    state_next_placeholders = []
     for i in range(env.n):
         n_action = env.action_space[i].n
         state_size = env.observation_space[i].shape[0]
         state = tf.placeholder(tf.float32, shape=[None, state_size])
         state_next = tf.placeholder(tf.float32, shape=[None, state_size])
+        speed = 0.9 if env.agents[i].adversary else 1
 
-        actors.append(Actor('actor' + str(i), session, n_action, 1,
+        actors.append(Actor('actor' + str(i), session, n_action, speed,
                             state, state_next))
         actors_noise.append(OrnsteinUhlenbeckActionNoise(
             mu=np.zeros(n_action)))
         memories.append(Memory(MEMORY_SIZE))
 
-        n_actions += n_action
-        state_sizes += state_size
+        n_actions.append(n_action)
         eval_actions.append(actors[i].eval_actions)
         target_actions.append(actors[i].target_actions)
+        state_placeholders.append(state)
+        state_next_placeholders.append(state_next)
 
     critics = []
-    eval_actions = tf.concat(eval_actions, 1)
-    target_actions = tf.concat(target_actions, 1)
     for i in range(env.n):
         n_action = env.action_space[i].n
-        state = tf.placeholder(tf.float32, shape=[None, state_sizes])
-        state_next = tf.placeholder(tf.float32, shape=[None, state_sizes])
         reward = tf.placeholder(tf.float32, [None, 1])
 
         critics.append(Critic('critic' + str(i), session, n_actions,
-                              eval_actions, target_actions, state_sizes,
-                              state, state_next, reward))
-        actors[i].add_gradients(
-            critics[i].action_gradients[:, i * n_action: (i + 1) * n_action])
+                              eval_actions, target_actions, state_placeholders,
+                              state_next_placeholders, reward))
+        actors[i].add_gradients(critics[i].action_gradients[i])
 
     session.run(tf.global_variables_initializer())
 
