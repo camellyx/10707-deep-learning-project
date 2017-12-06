@@ -46,7 +46,7 @@ class Critic:
             W = tf.random_normal_initializer(0.0, 0.1)
             b = tf.constant_initializer(0.1)
 
-            h3 = tf.zeros([x1[0].shape[0], 30])
+            first = True
             for i in range(len(x1)):
                 h1 = tf.layers.dense(x1[i], 30, activation=tf.nn.relu,
                                      kernel_initializer=W, bias_initializer=b,
@@ -56,7 +56,11 @@ class Critic:
                 h22 = tf.get_variable('h22-' + str(i), [self.n_actions[i], 30],
                                       initializer=W, trainable=trainable)
 
-                h3 = h3 + tf.matmul(h1, h21) + tf.matmul(x2, h22)
+                if first == True:
+                    h3 = tf.matmul(h1, h21) + tf.matmul(x2[i], h22)
+                    first = False
+                else:
+                    h3 = h3 + tf.matmul(h1, h21) + tf.matmul(x2[i], h22)
 
             b2 = tf.get_variable('b2', [1, 30], initializer=b,
                                  trainable=trainable)
@@ -68,9 +72,10 @@ class Critic:
         return values
 
     def learn(self, states, actions, rewards, states_next):
-        # TODO: all agents
-        self.session.run(self.optimize, feed_dict={self.eval_states: states,
-                                                   self.actors_eval_actions: actions,
-                                                   self.rewards: rewards,
-                                                   self.target_states: states_next})
+        a = {i: d for i, d in zip(self.eval_states, states)}
+        b = {i: d for i, d in zip(self.actors_eval_actions, actions)}
+        c = {i: d for i, d in zip(self.target_states, states_next)}
+
+        self.session.run(self.optimize, feed_dict={**a, **b, **c,
+                                                   self.rewards: rewards})
         self.session.run(self.update_target)
