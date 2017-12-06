@@ -64,17 +64,6 @@ class Actor:
         return self.session.run(self.eval_actions,
                                 feed_dict={self.eval_states: state[np.newaxis, :]})[0]
 
-    def load(self, name):
-        latest_ckpt = tf.train.latest_checkpoint(name)
-        if latest_ckpt:
-            print("Loading model from checkpoint {}".format(latest_ckpt))
-            self.saver.restore(self.session, latest_ckpt)
-
-    def save(self, name):
-        # if not os.path.exists(name):
-        #     os.makedirs(name)
-        save_path = self.saver.save(self.session, name)
-
 
 class Critic:
 
@@ -143,14 +132,3 @@ class Critic:
                                                    self.rewards: rewards,
                                                    self.target_states: states_next})
         self.session.run(self.update_target)
-
-    def load(self, name):
-        latest_ckpt = tf.train.latest_checkpoint(name)
-        if latest_ckpt:
-            print("Loading model from checkpoint {}".format(latest_ckpt))
-            self.saver.restore(self.session, latest_ckpt)
-
-    def save(self, name):
-        # if not os.path.exists(name):
-        #     os.makedirs(name)
-        save_path = self.saver.save(self.session, name)

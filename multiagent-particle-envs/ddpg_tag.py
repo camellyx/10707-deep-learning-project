@@ -5,6 +5,7 @@ import argparse
 import itertools
 import time
 import os
+import sys
 import pickle
 import code
 import random
@@ -14,8 +15,6 @@ from memory import Memory
 from ornstein_uhlenbeck import OrnsteinUhlenbeckActionNoise
 from make_env import make_env
 import general_utilities
-
-from monitor import MyMonitor
 
 
 def play():
@@ -27,7 +26,7 @@ def play():
 
         # act
         actions = []
-        for i in range(env.env.n):
+        for i in range(env.n):
             action = np.clip(
                 actors[i].choose_action(states[i]) + actors_noise[i](), -2, 2)
             actions.append(action)
@@ -42,7 +41,7 @@ def play():
             batch = random.sample(range(size), size) if size < args.batch_size else random.sample(
                 range(size), args.batch_size)
 
-            for i in range(env.env.n):
+            for i in range(env.n):
                 if done[i]:
                     rewards[i] *= 100
 
@@ -63,8 +62,8 @@ def play():
 
             # collect statistics and print rewards. NOTE: simple tag specific!
             statistic = [episode]
-            statistic.extend([rewards[i] for i in range(env.env.n)])
-            statistic.extend([losses[i] for i in range(env.env.n)])
+            statistic.extend([rewards[i] for i in range(env.n)])
+            statistic.extend([losses[i] for i in range(env.n)])
             statistics.add_statistics(statistic)
             if episode % 25 == 0:
                 print('Episode: ', episode, ' Rewards: ', rewards)
@@ -76,10 +75,10 @@ def play():
         if episode % args.checkpoint_frequency == 0:
             statistics.dump("{}_{}.csv".format(
                 args.csv_filename_prefix, episode))
-            general_utilities.save_dqn_weights(critics,
-                                               "{}/episode_{}_".format(args.weights_filename_prefix, episode) + "critic_")
-            general_utilities.save_dqn_weights(actors,
-                                               "{}/episode_{}_".format(args.weights_filename_prefix, episode) + "actor_")
+            with tf.Graph().as_default():
+                save_path = saver.save(session, os.path.join(
+                    args.weights_filename_prefix, "models"), global_step=episode)
+                print("saving model to {}".format(save_path))
             if episode >= args.checkpoint_frequency:
                 os.remove("{}_{}.csv".format(args.csv_filename_prefix,
                                              episode - args.checkpoint_frequency))
@@ -98,12 +97,10 @@ if __name__ == '__main__':
                         help="where to store/load network weights")
     parser.add_argument('--csv_filename_prefix', default='',
                         help="where to store statistics")
-    parser.add_argument('--video_dir', default='videos/ddpg/',
-                        help="where to store statistics")
     parser.add_argument('--checkpoint_frequency', default=10000, type=int,
                         help="how often to checkpoint")
-    parser.add_argument('--video_interval', default=100, type=int,
-                        help="how often to checkpoint")
+    parser.add_argument('--load_weights_from_file', default='',
+                        help="where to load network weights")
     parser.add_argument('--testing', default=False, action="store_true",
                         help="reduces exploration substantially")
     parser.add_argument('--random_seed', default=2, type=int)
@@ -131,17 +128,17 @@ if __name__ == '__main__':
 
     # init env
     env = make_env(args.env, args.benchmark)
-    if not os.path.exists(args.video_dir):
-        os.makedirs(args.video_dir)
-    args.video_dir = os.path.join(
-        args.video_dir, 'monitor-' + time.strftime("%y-%m-%d-%H-%M"))
-    if not os.path.exists(args.video_dir):
-        os.makedirs(args.video_dir)
-    env = MyMonitor(env, args.video_dir,
-                    # resume=True, write_upon_reset=True,
-                    video_callable=lambda episode: (
-                        episode + 1) % args.video_interval == 0,
-                    force=True)
+    # if not os.path.exists(args.video_dir):
+    #     os.makedirs(args.video_dir)
+    # args.video_dir = os.path.join(
+    #     args.video_dir, 'monitor-' + time.strftime("%y-%m-%d-%H-%M"))
+    # if not os.path.exists(args.video_dir):
+    #     os.makedirs(args.video_dir)
+    # env = MyMonitor(env, args.video_dir,
+    #                 # resume=True, write_upon_reset=True,
+    #                 video_callable=lambda episode: (
+    #                     episode + 1) % args.video_interval == 0,
+    #                 force=True)
 
     # set random seed
     env.seed(args.random_seed)
@@ -161,9 +158,9 @@ if __name__ == '__main__':
     critics = []
     actors_noise = []
     memories = []
-    for i in range(env.env.n):
+    for i in range(env.n):
         n_actions.append(env.action_space[i].n)
-        state_sizes.append(env.env.observation_space[i].shape[0])
+        state_sizes.append(env.observation_space[i].shape[0])
         states_placeholder.append(tf.placeholder(
             tf.float32, shape=[None, state_sizes[i]]))
         rewards_placeholder.append(tf.placeholder(tf.float32, [None, 1]))
@@ -179,22 +176,23 @@ if __name__ == '__main__':
         actors_noise.append(OrnsteinUhlenbeckActionNoise(
             mu=np.zeros(n_actions[i])))
         memories.append(
-            Memory(args.memory_size, env.env.n * state_sizes[i] + n_actions[i] + 2))
+            Memory(args.memory_size, env.n * state_sizes[i] + n_actions[i] + 2))
 
     session.run(tf.global_variables_initializer())
+    saver = tf.train.Saver(max_to_keep=10000000)
 
     # init statistics. NOTE: simple tag specific!
     statistics_header = ["epoch"]
-    statistics_header.extend(["reward_{}".format(i) for i in range(env.env.n)])
-    statistics_header.extend(["loss_{}".format(i) for i in range(env.env.n)])
+    statistics_header.extend(["reward_{}".format(i) for i in range(env.n)])
+    statistics_header.extend(["loss_{}".format(i) for i in range(env.n)])
     print("Collecting statistics {}:".format(" ".join(statistics_header)))
     statistics = general_utilities.Time_Series_Statistics_Store(
         statistics_header)
 
-    general_utilities.load_dqn_weights_if_exist(
-        actors, args.weights_filename_prefix + "actor_", ".h5.index")
-    general_utilities.load_dqn_weights_if_exist(
-        critics, args.weights_filename_prefix + "critic_", ".h5.index")
+    if args.load_weights_from_file != "":
+        saver.restore(session, args.load_weights_from_file)
+        print("restoring from checkpoint {}".format(
+            args.load_weights_from_file))
 
     start_time = time.time()
 
