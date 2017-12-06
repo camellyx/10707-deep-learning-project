@@ -31,7 +31,7 @@ def play():
         actions = []
         actions_onehot = []
         for i in range(env.n):
-            action = dqns[i].choose_action(states[i])
+            action = dqns[idx_mapping[i]].choose_action(states[i])
 
             onehot_action = np.zeros(n_actions[i])
             onehot_action[action] = 1 * speed
@@ -44,19 +44,18 @@ def play():
         # learn
         if not args.testing:
             losses = []
-            size = memories[0].pointer
-            batch = random.sample(range(size), size) if size < BATCH_SIZE else random.sample(
-                range(size), BATCH_SIZE)
 
             for i in range(env.n):
                 if done[i]:
                     rewards[i] *= 100
 
-                memories[i].remember(states[i], actions[i],
+                memories[idx_mapping[i]].remember(states[i], actions[i],
                                      rewards[i], states_next[i], done[i])
 
-                if memories[i].pointer > BATCH_SIZE * 10:
-                    history = dqns[i].learn(*memories[i].sample(batch))
+                size = memories[idx_mapping[i]].pointer
+                batch = random.sample(range(min(size, BATCH_SIZE)), min(size, BATCH_SIZE))
+                if memories[idx_mapping[i]].pointer > BATCH_SIZE * 10:
+                    history = dqns[idx_mapping[i]].learn(*memories[idx_mapping[i]].sample(batch))
                     losses.append(history.history["loss"][0])
                 else:
                     losses.append(-1)
@@ -64,8 +63,7 @@ def play():
             states = states_next
 
             # collect statistics and print rewards. NOTE: simple tag specific!
-            statistics.add_statistics([episode, rewards[0], rewards[1],
-                                       losses[0], losses[1]])
+            statistics.add_statistics([episode] + rewards + losses)
             print('Episode: ', episode, ' Rewards: ', rewards)
 
         # reset states if done
@@ -85,6 +83,7 @@ if __name__ == '__main__':
     parser.add_argument('--testing', default=False, action="store_true",
                         help="reduces exploration substantially")
     parser.add_argument('--random_seed', default=2, type=int)
+    parser.add_argument('--shared_weight', default=False, action="store_true")
     args = parser.parse_args()
 
     # init env
@@ -99,15 +98,30 @@ if __name__ == '__main__':
     # init DQNs
     n_actions = [env.action_space[i].n for i in range(env.n)]
     state_sizes = [env.observation_space[i].shape[0] for i in range(env.n)]
-    memories = [Memory(MEMORY_SIZE, 2 * state_sizes[i] + 3)
-                for i in range(env.n)]
-    dqns = [DQN(n_actions[i], state_sizes[i]) for i in range(env.n)]
+    idx_mapping = {}     # mapping from agent idx to network/memory idx
+    for i in range(env.n):
+        if env.agents[i].adversary:
+            idx_mapping[i] = 0 if args.shared_weight else i
+            adversary = i
+        else:
+            idx_mapping[i] = 1 if args.shared_weight else i
+            agent = i
+
+    if args.shared_weight:
+        memories = [Memory(MEMORY_SIZE, 2 * state_sizes[i] + 3)
+                    for i in [adversary, agent]]
+        dqns = [DQN(n_actions[i], state_sizes[i]) for i in [adversary, agent]]
+        args.weights_filename_prefix += '_shared'
+    else:
+        memories = [Memory(MEMORY_SIZE, 2 * state_sizes[i] + 3)
+                    for i in range(env.n)]
+        dqns = [DQN(n_actions[i], state_sizes[i]) for i in range(env.n)]
 
     general_utilities.load_dqn_weights_if_exist(
         dqns, args.weights_filename_prefix)
 
     # init statistics. NOTE: simple tag specific!
-    statistics_header = ["epoch", "reward_0", "reward_1", "loss_0", "loss_1"]
+    statistics_header = ["epoch"] + ["reward_" + str(i) for i in range(env.n)] + ["loss_" + str(i) for i in range(env.n)]
     statistics = general_utilities.Time_Series_Statistics_Store(
         statistics_header)
     start_time = time.time()
@@ -119,4 +133,7 @@ if __name__ == '__main__':
     print("Finished {} episodes in {} seconds".format(args.episodes,
                                                       time.time() - start_time))
     general_utilities.save_dqn_weights(dqns, args.weights_filename_prefix)
-    statistics.dump("./save/statistics-dqn.csv")
+    if args.shared_weight:
+        statistics.dump("./save/statistics-dqn_shared.csv")
+    else:
+        statistics.dump("./save/statistics-dqn.csv")
