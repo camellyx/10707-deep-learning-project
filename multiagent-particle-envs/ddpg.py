@@ -71,8 +71,8 @@ class Actor:
             self.saver.restore(self.session, latest_ckpt)
 
     def save(self, name):
-        if not os.path.exists(name):
-            os.makedirs(name)
+        # if not os.path.exists(name):
+        #     os.makedirs(name)
         save_path = self.saver.save(self.session, name)
 
 
@@ -151,6 +151,6 @@ class Critic:
             self.saver.restore(self.session, latest_ckpt)
 
     def save(self, name):
-        if not os.path.exists(name):
-            os.makedirs(name)
+        # if not os.path.exists(name):
+        #     os.makedirs(name)
         save_path = self.saver.save(self.session, name)
