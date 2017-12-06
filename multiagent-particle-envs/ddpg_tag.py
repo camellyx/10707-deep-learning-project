@@ -79,17 +79,15 @@ def play():
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--env', default='simple_tag_guided', type=str)
-    parser.add_argument('--video_dir', default='videos/', type=str)
     parser.add_argument('--learning_rate', default=0.001, type=float)
-    parser.add_argument('--episodes', default=100000, type=int)
-    parser.add_argument('--video_interval', default=1000, type=int)
+    parser.add_argument('--episodes', default=500000, type=int)
     parser.add_argument('--render', default=False, action="store_true")
     parser.add_argument('--benchmark', default=False, action="store_true")
     parser.add_argument('--experiment_prefix', default=".",
                         help="directory to store all experiment data")
-    parser.add_argument('--weights_filename_prefix', default='/save/tag-dqn',
+    parser.add_argument('--weights_filename_prefix', default='/save/tag-ddpg',
                         help="where to store/load network weights")
-    parser.add_argument('--csv_filename_prefix', default='/save/statistics-dqn',
+    parser.add_argument('--csv_filename_prefix', default='/save/statistics-ddpg',
                         help="where to store statistics")
     parser.add_argument('--checkpoint_frequency', default=500, type=int,
                         help="how often to checkpoint")

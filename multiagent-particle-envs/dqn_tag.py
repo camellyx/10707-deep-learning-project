@@ -14,8 +14,9 @@ from memory import Memory
 from make_env import make_env
 import general_utilities
 
-def play(episodes, is_render, is_testing, checkpoint_interval, \
-        weights_filename_prefix, csv_filename_prefix, batch_size):
+
+def play(episodes, is_render, is_testing, checkpoint_interval,
+         weights_filename_prefix, csv_filename_prefix, batch_size):
     # init statistics. NOTE: simple tag specific!
     statistics_header = ["epoch"]
     statistics_header.extend(["reward_{}".format(i) for i in range(env.n)])
@@ -84,8 +85,8 @@ def play(episodes, is_render, is_testing, checkpoint_interval, \
 
         if episode % checkpoint_interval == 0:
             statistics.dump("{}_{}.csv".format(csv_filename_prefix, episode))
-            general_utilities.save_dqn_weights(dqns, \
-                    "{}_{}_".format(weights_filename_prefix, episode))
+            general_utilities.save_dqn_weights(dqns,
+                                               "{}_{}_".format(weights_filename_prefix, episode))
 
     return statistics
 
@@ -110,10 +111,19 @@ if __name__ == '__main__':
     parser.add_argument('--random_seed', default=2, type=int)
     parser.add_argument('--memory_size', default=10000, type=int)
     parser.add_argument('--batch_size', default=64, type=int)
+
     args = parser.parse_args()
+    args.weights_filename_prefix = args.experiment_prefix + args.weights_filename_prefix
+    args.csv_filename_prefix = args.experiment_prefix + args.csv_filename_prefix
+    if not os.path.exists(args.experiment_prefix):
+        os.makedirs(args.experiment_prefix)
+    if not os.path.exists(args.weights_filename_prefix):
+        os.makedirs(args.weights_filename_prefix)
+    if not os.path.exists(args.csv_filename_prefix):
+        os.makedirs(args.csv_filename_prefix)
 
     general_utilities.dump_dict_as_json(vars(args),
-            args.experiment_prefix + "/save/run_parameters.json")
+                                        args.experiment_prefix + "/save/run_parameters.json")
 
     # init env
     env = make_env(args.env, args.benchmark)
@@ -140,13 +150,14 @@ if __name__ == '__main__':
 
     # play
     statistics = play(args.episodes, args.render, args.testing,
-            args.checkpoint_frequency,
-            args.experiment_prefix + args.weights_filename_prefix,
-            args.experiment_prefix + args.csv_filename_prefix,
-            args.batch_size)
+                      args.checkpoint_frequency,
+                      args.experiment_prefix + args.weights_filename_prefix,
+                      args.experiment_prefix + args.csv_filename_prefix,
+                      args.batch_size)
 
     # bookkeeping
     print("Finished {} episodes in {} seconds".format(args.episodes,
                                                       time.time() - start_time))
-    general_utilities.save_dqn_weights(dqns, args.experiment_prefix + args.weights_filename_prefix)
+    general_utilities.save_dqn_weights(
+        dqns, args.experiment_prefix + args.weights_filename_prefix)
     statistics.dump(args.experiment_prefix + args.csv_filename_prefix + ".csv")
