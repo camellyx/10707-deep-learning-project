@@ -7,6 +7,7 @@ import numpy as np
 import argparse
 import os
 
+
 def to_percent(y, position):
     # Ignore the passed in position. This has the effect of scaling the default
     # tick locations.
@@ -18,36 +19,37 @@ def to_percent(y, position):
     else:
         return s + '%'
 
+
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(prog="CSV Plotter",\
+    parser = argparse.ArgumentParser(prog="CSV Plotter",
                                      description="Plots CSV files")
-    parser.add_argument("filename",\
-            type=str,\
-            help="The filename of csv format")
-    parser.add_argument("-o",\
-                        "--output_filename",\
-                        nargs="?",\
+    parser.add_argument("filename",
+                        type=str,
+                        help="The filename of csv format")
+    parser.add_argument("-o",
+                        "--output_filename",
+                        nargs="?",
                         type=str,
                         help="The filename to write the plot to")
-    parser.add_argument("-s",\
-                        "--startidx",\
-                        nargs="?",\
-                        type=int,\
-                        default=0,\
+    parser.add_argument("-s",
+                        "--startidx",
+                        nargs="?",
+                        type=int,
+                        default=0,
                         help="Where to start from")
-    parser.add_argument("-e",\
-                        "--endidx",\
-                        nargs="?",\
-                        type=int,\
-                        default=-2,\
+    parser.add_argument("-e",
+                        "--endidx",
+                        nargs="?",
+                        type=int,
+                        default=-2,
                         help="Where to end")
-    parser.add_argument("-r",\
-                        "--rolling",\
-                        nargs="?",\
-                        type=int,\
-                        default=0,\
+    parser.add_argument("-r",
+                        "--rolling",
+                        nargs="?",
+                        type=int,
+                        default=0,
                         help="Rolling average size")
-    parser.add_argument("--loss",\
+    parser.add_argument("--loss",
                         action="store_true")
     parser.add_argument("--reward",\
                         action="store_true")
@@ -55,11 +57,11 @@ if __name__ == "__main__":
                         action="store_true")
     parser.add_argument("--error",\
                         action="store_true")
-    parser.add_argument("--perplexity",\
+    parser.add_argument("--perplexity",
                         action="store_true")
-    parser.add_argument("--autoout",\
+    parser.add_argument("--autoout",
                         action="store_true")
-    parser.add_argument("--min",\
+    parser.add_argument("--min",
                         action="store_true")
 
     args = parser.parse_args()
@@ -97,7 +99,8 @@ if __name__ == "__main__":
     ax = selected_df.plot()
     if args.rolling:
         window_size = args.rolling
-        selected_df.rolling(window_size).mean().plot(color="r", style="--", ax=ax, legend=0)
+        selected_df.rolling(window_size).mean().plot(
+            color="r", style="--", ax=ax, legend=0)
     if args.min:
         idxs = selected_df.idxmin()
         for k in selected_df:
@@ -131,7 +134,7 @@ if __name__ == "__main__":
                 print("Optimized validation error {}".format(y_validation_error))
                 print("Optimized train loss {}".format(y_train_loss))
                 print("Optimized train error {}".format(y_train_error))
-            ax.scatter(x,y,s=40, facecolors="none", edgecolors="r")
+            ax.scatter(x, y, s=40, facecolors="none", edgecolors="r")
     plt.xlabel("epochs")
     if args.loss and not args.error:
         plt.ylabel("loss")

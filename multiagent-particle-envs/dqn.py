@@ -1,88 +1,71 @@
 import random
 import numpy as np
-from collections import deque
 from keras.models import Sequential
 from keras.layers import Dense
 from keras.optimizers import Adam
-from keras import backend as K
 
-# TODO: prioritized replay buffer
 
 class DQN:
-    def __init__(self, n_actions, state_size, epsilon=0.5, gamma=0.99, \
-            batch_size=64, memory_size=2000, replace_target_steps=1000, \
-            learning_rate = 0.001):
-        """
-        epsilon and gamma are for RL parameters, not net parameters!
-        """
+    def __init__(self, n_actions, state_size, gamma=0.9, learning_rate=0.001,
+                 eps_greedy=0.5, eps_increment=1e-5, replace_target_freq=2000):
         self.n_actions = n_actions
         self.state_size = state_size
-        self.memory = deque(maxlen=memory_size)
-        self.learning_step = 0
-        self.eval_network = self.build_network(learning_rate=learning_rate)
-        self.target_network = self.build_network(learning_rate=learning_rate)
-        self.update_target_weights()
-        self.epsilon=epsilon
         self.gamma = gamma
-        self.batch_size = batch_size
-        self.replace_target_steps = replace_target_steps
+        self.learning_rate = learning_rate
+        self.eps_greedy = eps_greedy
+        self.eps_increment = eps_increment
+        self.learning_step = 0
+        self.replace_target_freq = replace_target_freq
+        self.eval_network = self.build_network()
+        self.target_network = self.build_network()
+        self.update_target_weights()
 
-    def huber_loss(self, target, prediction):
-        error = prediction - target
-        return K.mean(K.sqrt(1 + K.square(error)) - 1, axis=-1)
-
-    def build_network(self, learning_rate):
+    def build_network(self):
         model = Sequential()
         model.add(Dense(50, input_dim=self.state_size, activation='relu'))
-        model.add(Dense(30, activation='relu'))
-        model.add(Dense(24, activation='relu'))
+        model.add(Dense(50, activation='relu'))
         model.add(Dense(self.n_actions, activation='linear'))
-        model.compile(loss=self.huber_loss, optimizer=Adam(lr=learning_rate))
+        model.compile(loss='mse', optimizer=Adam(self.learning_rate))
+
         return model
 
     def update_target_weights(self):
         self.target_network.set_weights(self.eval_network.get_weights())
 
-    def choose_action(self, state, t):
+    def choose_action(self, state):
         p = np.random.random()
-        if p < (1 - self.epsilon / t):
+        if p < self.eps_greedy:
             action_probs = self.eval_network.predict(state[np.newaxis, :])
             return np.argmax(action_probs[0])
         else:
             return random.randrange(self.n_actions)
 
-    def remember(self, state, action, reward, state_next, done):
-        self.memory.append((state, action, reward, state_next, done))
-
-    def learn(self):
-        if self.learning_step % self.replace_target_steps == 0:
+    def learn(self, states, actions, rewards, states_next, done):
+        if self.learning_step % self.replace_target_freq == 0:
             self.update_target_weights()
 
-        minibatch = random.sample(self.memory, self.batch_size)
-        minibatch_state, minibatch_action, minibatch_reward, \
-                minibatch_state_next, minibatch_done = map(np.array, zip(*minibatch))
+        rows = np.arange(done.shape[0])
+        not_done = np.logical_not(done)
 
-        minibatch_not_done = np.logical_not(minibatch_done)
+        eval_next = self.eval_network.predict(states_next)
+        target_next = self.target_network.predict(states_next)
+        discounted_rewards = self.gamma * \
+            target_next[rows, np.argmax(eval_next, axis=1)]
 
-        minibatch_e = self.eval_network.predict(minibatch_state_next)
-        minibatch_t = self.target_network.predict(minibatch_state_next)
+        y = self.eval_network.predict(states)
+        y[rows, actions] = rewards
+        y[not_done, actions[not_done]] += discounted_rewards[not_done]
 
-        best_action = np.argmax(minibatch_e, axis=1)
-        discounted_reward = self.gamma * minibatch_t[np.arange(minibatch_t.shape[0]), best_action]
-
-        minibatch_target = self.eval_network.predict(minibatch_state)
-        minibatch_target[np.arange(minibatch_target.shape[0]), minibatch_action] = minibatch_reward
-        minibatch_target[minibatch_not_done, minibatch_action[minibatch_not_done]] += discounted_reward[minibatch_not_done]
-
-        history = self.eval_network.fit(minibatch_state, minibatch_target, epochs=1, verbose=0)
+        history = self.eval_network.fit(states, y, epochs=1, verbose=0)
         self.learning_step += 1
+        if self.eps_greedy < 0.9:
+            self.eps_greedy += self.eps_increment
+
         return history
 
     def load(self, name):
         self.eval_network.load_weights(name)
-        self.target_network.load_weights(name)
+        self.update_target_weights()
 
     def save(self, name):
         self.eval_network.save_weights(name)
-        self.target_network.save_weights(name)
-

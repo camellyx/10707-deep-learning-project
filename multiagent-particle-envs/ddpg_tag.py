@@ -9,8 +9,9 @@ import pickle
 import code
 import random
 
-from dqn import DQN
+from ddpg import Actor, Critic
 from memory import Memory
+from ornstein_uhlenbeck import OrnsteinUhlenbeckActionNoise
 from make_env import make_env
 import general_utilities
 
@@ -20,8 +21,6 @@ BATCH_SIZE = 64
 
 def play():
     states = env.reset()
-    speed = 0.1
-
     for episode in range(args.episodes):
         # render
         if args.render:
@@ -29,17 +28,13 @@ def play():
 
         # act
         actions = []
-        actions_onehot = []
         for i in range(env.n):
-            action = dqns[i].choose_action(states[i])
-
-            onehot_action = np.zeros(n_actions[i])
-            onehot_action[action] = 1 * speed
-            actions_onehot.append(onehot_action)
+            action = np.clip(
+                actors[i].choose_action(states[i]) + actors_noise[i](), -2, 2)
             actions.append(action)
 
         # step
-        states_next, rewards, done, info = env.step(actions_onehot)
+        states_next, rewards, done, info = env.step(actions)
 
         # learn
         if not args.testing:
@@ -56,8 +51,12 @@ def play():
                                      rewards[i], states_next[i], done[i])
 
                 if memories[i].pointer > BATCH_SIZE * 10:
-                    history = dqns[i].learn(*memories[i].sample(batch))
-                    losses.append(history.history["loss"][0])
+                    s, a, r, sn, _ = memories[i].sample(batch)
+                    r = np.reshape(r, (BATCH_SIZE, 1))
+                    critics[i].learn(s, a, r, sn)
+                    actors[i].learn(s)
+                    # TODO: losses.append(history.history["loss"][0])
+                    losses.append(0)
                 else:
                     losses.append(-1)
 
@@ -77,10 +76,10 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--env', default='simple_tag_guided', type=str)
     parser.add_argument('--learning_rate', default=0.001, type=float)
-    parser.add_argument('--episodes', default=500000, type=int)
+    parser.add_argument('--episodes', default=100000, type=int)
     parser.add_argument('--render', default=False, action="store_true")
     parser.add_argument('--benchmark', default=False, action="store_true")
-    parser.add_argument('--weights_filename_prefix', default='./save/tag-dqn',
+    parser.add_argument('--weights_filename_prefix', default='./save/tag-ddpg/',
                         help="where to store/load network weights")
     parser.add_argument('--testing', default=False, action="store_true",
                         help="reduces exploration substantially")
@@ -96,15 +95,39 @@ if __name__ == '__main__':
     np.random.seed(args.random_seed)
     tf.set_random_seed(args.random_seed)
 
-    # init DQNs
-    n_actions = [env.action_space[i].n for i in range(env.n)]
-    state_sizes = [env.observation_space[i].shape[0] for i in range(env.n)]
-    memories = [Memory(MEMORY_SIZE, 2 * state_sizes[i] + 3)
-                for i in range(env.n)]
-    dqns = [DQN(n_actions[i], state_sizes[i]) for i in range(env.n)]
+    # init actors and critics
+    session = tf.Session()
 
-    general_utilities.load_dqn_weights_if_exist(
-        dqns, args.weights_filename_prefix)
+    n_actions = []
+    state_sizes = []
+    states_placeholder = []
+    rewards_placeholder = []
+    states_next_placeholder = []
+    actors = []
+    critics = []
+    actors_noise = []
+    memories = []
+    for i in range(env.n):
+        n_actions.append(env.action_space[i].n)
+        state_sizes.append(env.observation_space[i].shape[0])
+        states_placeholder.append(tf.placeholder(
+            tf.float32, shape=[None, state_sizes[i]]))
+        rewards_placeholder.append(tf.placeholder(tf.float32, [None, 1]))
+        states_next_placeholder.append(tf.placeholder(tf.float32,
+                                                      shape=[None, state_sizes[i]]))
+        actors.append(Actor('actor' + str(i), session, n_actions[i], 1,
+                            states_placeholder[i], states_next_placeholder[i]))
+        critics.append(Critic('critic' + str(i), session, n_actions[i],
+                              actors[i].eval_actions, actors[i].target_actions,
+                              state_sizes[i], states_placeholder[i],
+                              states_next_placeholder[i], rewards_placeholder[i]))
+        actors[i].add_gradients(critics[i].action_gradients)
+        actors_noise.append(OrnsteinUhlenbeckActionNoise(
+            mu=np.zeros(n_actions[i])))
+        memories.append(
+            Memory(MEMORY_SIZE, 2 * state_sizes[i] + n_actions[i] + 2))
+
+    session.run(tf.global_variables_initializer())
 
     # init statistics. NOTE: simple tag specific!
     statistics_header = ["epoch", "reward_0", "reward_1", "loss_0", "loss_1"]
@@ -118,5 +141,5 @@ if __name__ == '__main__':
     # bookkeeping
     print("Finished {} episodes in {} seconds".format(args.episodes,
                                                       time.time() - start_time))
-    general_utilities.save_dqn_weights(dqns, args.weights_filename_prefix)
-    statistics.dump("./save/statistics-dqn.csv")
+    tf.summary.FileWriter("options.weights_filename_prefix", session.graph)
+    statistics.dump("./save/statistics-ddpg.csv")
