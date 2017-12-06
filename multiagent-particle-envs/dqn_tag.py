@@ -69,9 +69,12 @@ def play(episodes, is_render, is_testing, checkpoint_interval, \
             states = states_next
 
             # collect statistics and print rewards. NOTE: simple tag specific!
-            statistics.add_statistics([episode, rewards[0], rewards[1],
-                                       losses[0], losses[1]])
-            print('Episode: ', episode, ' Rewards: ', rewards)
+            statistic = [episode]
+            statistic.extend([rewards[i] for i in range(env.n)])
+            statistic.extend([losses[i] for i in range(env.n)])
+            statistics.add_statistics(statistic)
+            if episode % 25 == 0:
+                print('Episode: ', episode, ' Rewards: ', rewards)
 
         # reset states if done
         if any(done):
