@@ -88,9 +88,9 @@ def play(episodes, is_render, is_testing, checkpoint_interval,
                 "{}/episode_{}.csv".format(csv_filename_prefix, episode))
             general_utilities.save_dqn_weights(dqns,
                                                "{}/episode_{}_".format(weights_filename_prefix, episode))
-        if episode >= args.checkpoint_frequency:
-            os.remove("{}_{}.csv".format(csv_filename_prefix,
-                                         episode - args.checkpoint_frequency))
+            if episode >= checkpoint_interval:
+                os.remove("{}/episode_{}.csv".format(csv_filename_prefix,
+                                             episode - args.checkpoint_frequency))
 
     return statistics
 
