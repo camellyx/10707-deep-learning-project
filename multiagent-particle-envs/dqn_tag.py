@@ -14,11 +14,8 @@ from memory import Memory
 from make_env import make_env
 import general_utilities
 
-MEMORY_SIZE = 10000
-BATCH_SIZE = 64
-
 def play(episodes, is_render, is_testing, checkpoint_interval, \
-        weights_filename_prefix, csv_filename_prefix):
+        weights_filename_prefix, csv_filename_prefix, batch_size):
     # init statistics. NOTE: simple tag specific!
     statistics_header = ["epoch"]
     statistics_header.extend(["reward_{}".format(i) for i in range(env.n)])
@@ -53,8 +50,8 @@ def play(episodes, is_render, is_testing, checkpoint_interval, \
         if not is_testing:
             losses = []
             size = memories[0].pointer
-            batch = random.sample(range(size), size) if size < BATCH_SIZE else random.sample(
-                range(size), BATCH_SIZE)
+            batch = random.sample(range(size), size) if size < batch_size else random.sample(
+                range(size), batch_size)
 
             for i in range(env.n):
                 if done[i]:
@@ -63,7 +60,7 @@ def play(episodes, is_render, is_testing, checkpoint_interval, \
                 memories[i].remember(states[i], actions[i],
                                      rewards[i], states_next[i], done[i])
 
-                if memories[i].pointer > BATCH_SIZE * 10:
+                if memories[i].pointer > batch_size * 10:
                     history = dqns[i].learn(*memories[i].sample(batch))
                     losses.append(history.history["loss"][0])
                 else:
@@ -106,6 +103,8 @@ if __name__ == '__main__':
     parser.add_argument('--testing', default=False, action="store_true",
                         help="reduces exploration substantially")
     parser.add_argument('--random_seed', default=2, type=int)
+    parser.add_argument('--memory_size', default=10000, type=int)
+    parser.add_argument('--batch_size', default=64, type=int)
     args = parser.parse_args()
 
     general_utilities.dump_dict_as_json(vars(args),
@@ -123,7 +122,7 @@ if __name__ == '__main__':
     # init DQNs
     n_actions = [env.action_space[i].n for i in range(env.n)]
     state_sizes = [env.observation_space[i].shape[0] for i in range(env.n)]
-    memories = [Memory(MEMORY_SIZE, 2 * state_sizes[i] + 3)
+    memories = [Memory(args.memory_size, 2 * state_sizes[i] + 3)
                 for i in range(env.n)]
     dqns = [DQN(n_actions[i], state_sizes[i]) for i in range(env.n)]
 
@@ -136,7 +135,8 @@ if __name__ == '__main__':
     statistics = play(args.episodes, args.render, args.testing,
             args.checkpoint_frequency,
             args.experiment_prefix + args.weights_filename_prefix,
-            args.experiment_prefix + args.csv_filename_prefix)
+            args.experiment_prefix + args.csv_filename_prefix,
+            args.batch_size)
 
     # bookkeeping
     print("Finished {} episodes in {} seconds".format(args.episodes,
