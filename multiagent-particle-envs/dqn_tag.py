@@ -127,6 +127,8 @@ if __name__ == '__main__':
     # init DQNs
     n_actions = [env.action_space[i].n for i in range(env.n)]
     state_sizes = [env.observation_space[i].shape[0] for i in range(env.n)]
+
+    # Memory: state initial, state final, action, reward, done
     memories = [Memory(args.memory_size, 2 * state_sizes[i] + 3)
                 for i in range(env.n)]
     dqns = [DQN(n_actions[i], state_sizes[i]) for i in range(env.n)]
