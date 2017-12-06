@@ -63,7 +63,7 @@ def play(episodes, is_render, is_testing, checkpoint_interval,
                                      rewards[i], states_next[i], done[i])
 
                 if memories[idx_mapping[i]].pointer > batch_size * 10:
-                    history = dqns[i].learn(*memories[idx_mapping[i]].sample(batch))
+                    history = dqns[idx_mapping[i]].learn(*memories[idx_mapping[i]].sample(batch))
                     losses.append(history.history["loss"][0])
                 else:
                     losses.append(-1)
@@ -74,7 +74,7 @@ def play(episodes, is_render, is_testing, checkpoint_interval,
             statistic = [episode]
             statistic.extend([rewards[i] for i in range(env.n)])
             statistic.extend([losses[i] for i in range(env.n)])
-            statistic.extend([dqns[i].eps_greedy for i in range(env.n)])
+            statistic.extend([dqns[idx_mapping[i]].eps_greedy for i in range(env.n)])
             statistics.add_statistics(statistic)
             if episode % 25 == 0:
                 print('Episode: ', episode, ' Rewards: ', rewards)
