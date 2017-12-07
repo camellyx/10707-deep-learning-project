@@ -86,7 +86,7 @@ if __name__ == '__main__':
     parser.add_argument('--episodes', default=100000, type=int)
     parser.add_argument('--render', default=False, action="store_true")
     parser.add_argument('--benchmark', default=False, action="store_true")
-    parser.add_argument('--weights_filename_prefix', default='./save/tag-ddpg/',
+    parser.add_argument('--weights_filename_prefix', default='./save/tag-maddpg/',
                         help="where to store/load network weights")
     parser.add_argument('--testing', default=False, action="store_true",
                         help="reduces exploration substantially")
@@ -157,4 +157,4 @@ if __name__ == '__main__':
     print("Finished {} episodes in {} seconds".format(args.episodes,
                                                       time.time() - start_time))
     tf.summary.FileWriter(args.weights_filename_prefix, session.graph)
-    statistics.dump("./save/statistics-ddpg.csv")
+    statistics.dump("./save/statistics-maddpg.csv")
