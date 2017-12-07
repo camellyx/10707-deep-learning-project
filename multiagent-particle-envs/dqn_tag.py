@@ -82,15 +82,6 @@ def play(episodes, is_render, is_testing, checkpoint_interval,
 
                 states = states_next
 
-            if episode % checkpoint_interval == 0:
-                statistics.dump("{}_{}.csv".format(csv_filename_prefix,
-                                                   episode))
-                general_utilities.save_dqn_weights(dqns,
-                                                   "{}_{}_".format(weights_filename_prefix, episode))
-                if episode >= checkpoint_interval:
-                    os.remove("{}_{}.csv".format(csv_filename_prefix,
-                                                 episode - checkpoint_interval))
-
             # reset states if done
             if any(done):
                 episode_rewards = episode_rewards / steps
@@ -106,6 +97,15 @@ def play(episodes, is_render, is_testing, checkpoint_interval,
                 if episode % 25 == 0:
                     print(statistics.summarize_last())
                 break
+
+        if episode % checkpoint_interval == 0:
+            statistics.dump("{}_{}.csv".format(csv_filename_prefix,
+                                               episode))
+            general_utilities.save_dqn_weights(dqns,
+                                               "{}_{}_".format(weights_filename_prefix, episode))
+            if episode >= checkpoint_interval:
+                os.remove("{}_{}.csv".format(csv_filename_prefix,
+                                             episode - checkpoint_interval))
 
     return statistics
 

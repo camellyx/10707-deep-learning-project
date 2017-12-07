@@ -16,10 +16,12 @@ from make_env import make_env
 import general_utilities
 import simple_tag_utilities
 
-def play(episodes, is_render, is_testing, checkpoint_interval, \
-        weights_filename_prefix, csv_filename_prefix, batch_size):
+
+def play(episodes, is_render, is_testing, checkpoint_interval,
+         weights_filename_prefix, csv_filename_prefix, batch_size):
     # init statistics. NOTE: simple tag specific!
-    statistics_header = ["epoch"]
+    statistics_header = ["episode"]
+    statistics_header.append("steps")
     statistics_header.extend(["reward_{}".format(i) for i in range(env.n)])
     statistics_header.extend(["loss_{}".format(i) for i in range(env.n)])
     statistics_header.extend(["collisions_{}".format(i) for i in range(env.n)])
@@ -32,76 +34,89 @@ def play(episodes, is_render, is_testing, checkpoint_interval, \
     statistics = general_utilities.Time_Series_Statistics_Store(
         statistics_header)
 
-    states = env.reset()
+    for episode in range(args.episodes):
+        states = env.reset()
+        episode_losses = np.zeros(env.n)
+        episode_rewards = np.zeros(env.n)
+        collision_count = np.zeros(env.n)
+        steps = 0
 
-    for episode in range(episodes):
-        # render
-        if is_render:
-            env.render()
+        while True:
+            steps += 1
 
-        # act
-        actions = []
-        for i in range(env.n):
-            action = np.clip(
-                actors[i].choose_action(states[i]) + actors_noise[i](), -2, 2)
-            actions.append(action)
+            # render
+            if args.render:
+                env.render()
 
-        # step
-        states_next, rewards, done, info = env.step(actions)
-
-        # learn
-        if not is_testing:
-            losses = []
-            size = memories[0].pointer
-            batch = random.sample(range(size), size) if size < batch_size else random.sample(
-                range(size), batch_size)
-
+            # act
+            actions = []
             for i in range(env.n):
-                if done[i]:
-                    rewards[i] *= 100
+                action = np.clip(
+                    actors[i].choose_action(states[i]) + actors_noise[i](), -2, 2)
+                actions.append(action)
 
-                memories[i].remember(states[i], actions[i],
-                                     rewards[i], states_next[i], done[i])
+            # step
+            states_next, rewards, done, info = env.step(actions)
+            episode_rewards += rewards
+            collision_count += np.array(
+                simple_tag_utilities.count_agent_collisions(env))
 
-                if memories[i].pointer > batch_size * 10:
-                    s, a, r, sn, _ = memories[i].sample(batch)
-                    r = np.reshape(r, (batch_size, 1))
-                    critics[i].learn(s, a, r, sn)
-                    actors[i].learn(s)
-                    # TODO: losses.append(history.history["loss"][0])
-                    losses.append(0)
-                else:
-                    losses.append(-1)
+            # learn
+            if not args.testing:
+                size = memories[0].pointer
+                batch = random.sample(range(size), size) if size < batch_size else random.sample(
+                    range(size), batch_size)
 
-            states = states_next
+                for i in range(env.n):
+                    if done[i]:
+                        rewards[i] *= 100
 
-            # collect statistics and print rewards. NOTE: simple tag specific!
-            statistic = [episode]
-            statistic.extend([rewards[i] for i in range(env.n)])
-            statistic.extend([losses[i] for i in range(env.n)])
-            statistic.extend(simple_tag_utilities.count_agent_collisions(env))
-            statistic.extend([actors_noise[i].theta for i in range(env.n)])
-            statistic.extend([actors_noise[i].mu for i in range(env.n)])
-            statistic.extend([actors_noise[i].sigma for i in range(env.n)])
-            statistic.extend([actors_noise[i].dt for i in range(env.n)])
-            statistic.extend([actors_noise[i].x0 for i in range(env.n)])
-            statistics.add_statistics(statistic)
-            if episode % 25 == 0:
-                print(statistics.summarize_last())
+                    memories[i].remember(states[i], actions[i],
+                                         rewards[i], states_next[i], done[i])
 
-        # reset states if done
-        if any(done):
-            states = env.reset()
+                    if memories[i].pointer > batch_size * 10:
+                        s, a, r, sn, _ = memories[i].sample(batch)
+                        r = np.reshape(r, (batch_size, 1))
+                        critics[i].learn(s, a, r, sn)
+                        actors[i].learn(s)
+                        # TODO: episode_losses[i] += history.history["loss"][0]
+                    else:
+                        episode_losses[i] = -1
+
+                states = states_next
+
+            # reset states if done
+            if any(done):
+                episode_rewards = episode_rewards / steps
+                episode_losses = episode_losses / steps
+
+                statistic = [episode]
+                statistic.append(steps)
+                statistic.extend([episode_rewards[i] for i in range(env.n)])
+                statistic.extend([episode_losses[i] for i in range(env.n)])
+                statistic.extend(collision_count.tolist())
+                statistic.extend([actors_noise[i].theta for i in range(env.n)])
+                statistic.extend([actors_noise[i].mu for i in range(env.n)])
+                statistic.extend([actors_noise[i].sigma for i in range(env.n)])
+                statistic.extend([actors_noise[i].dt for i in range(env.n)])
+                statistic.extend([actors_noise[i].x0 for i in range(env.n)])
+                statistics.add_statistics(statistic)
+                if episode % 25 == 0:
+                    print(statistics.summarize_last())
+                break
 
         if episode % checkpoint_interval == 0:
-            statistics.dump("{}_{}.csv".format(csv_filename_prefix, episode))
+            statistics.dump("{}_{}.csv".format(
+                csv_filename_prefix, episode))
             general_utilities.save_dqn_weights(critics,
                                                weights_filename_prefix + "critic_")
             general_utilities.save_dqn_weights(actors,
                                                weights_filename_prefix + "actor_")
             if episode >= checkpoint_interval:
-                os.remove("{}_{}.csv".format(csv_filename_prefix, \
-                        episode - checkpoint_interval))
+                os.remove("{}_{}.csv".format(csv_filename_prefix,
+                                             episode - checkpoint_interval))
+
+    return statistics
 
 
 if __name__ == '__main__':
@@ -115,9 +130,9 @@ if __name__ == '__main__':
     parser.add_argument('--benchmark', default=False, action="store_true")
     parser.add_argument('--experiment_prefix', default=".",
                         help="directory to store all experiment data")
-    parser.add_argument('--weights_filename_prefix', default='/save/tag-dqn',
+    parser.add_argument('--weights_filename_prefix', default='/save/tag-ddpg',
                         help="where to store/load network weights")
-    parser.add_argument('--csv_filename_prefix', default='/save/statistics-dqn',
+    parser.add_argument('--csv_filename_prefix', default='/save/statistics-ddpg',
                         help="where to store statistics")
     parser.add_argument('--checkpoint_frequency', default=500, type=int,
                         help="how often to checkpoint")
@@ -188,15 +203,16 @@ if __name__ == '__main__':
 
     # play
     statistics = play(args.episodes, args.render, args.testing,
-            args.checkpoint_frequency,
-            args.experiment_prefix + args.weights_filename_prefix,
-            args.experiment_prefix + args.csv_filename_prefix,
-            args.batch_size)
+                      args.checkpoint_frequency,
+                      args.experiment_prefix + args.weights_filename_prefix,
+                      args.experiment_prefix + args.csv_filename_prefix,
+                      args.batch_size)
 
     # bookkeeping
     print("Finished {} episodes in {} seconds".format(args.episodes,
                                                       time.time() - start_time))
-    tf.summary.FileWriter(args.experiment_prefix + args.weights_filename_prefix, session.graph)
+    tf.summary.FileWriter(args.experiment_prefix +
+                          args.weights_filename_prefix, session.graph)
     general_utilities.save_dqn_weights(critics,
                                        args.experiment_prefix + args.weights_filename_prefix + "critic_")
     general_utilities.save_dqn_weights(actors,
