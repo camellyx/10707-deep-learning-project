@@ -53,6 +53,8 @@ if __name__ == "__main__":
                         action="store_true")
     parser.add_argument("--reward",\
                         action="store_true")
+    parser.add_argument("--collisions",\
+                        action="store_true")
     parser.add_argument("--cum_reward",\
                         action="store_true")
     parser.add_argument("--error",\
@@ -68,7 +70,7 @@ if __name__ == "__main__":
     df = pd.read_csv(args.filename, delimiter=",", header=0, index_col=0)
 
     selected = df.keys()
-    if args.loss or args.error or args.perplexity or args.reward or args.cum_reward:
+    if args.loss or args.error or args.perplexity or args.reward or args.cum_reward or args.collisions:
         selected = []
         if args.loss:
             selected.extend([k for k in df.keys() if "loss" in k])
@@ -76,6 +78,8 @@ if __name__ == "__main__":
             selected.extend([k for k in df.keys() if "reward" in k])
         if args.cum_reward:
             selected.extend([k for k in df.keys() if "cum_reward" in k])
+        if args.collisions:
+            selected.extend([k for k in df.keys() if "collisions" in k])
         if args.error:
             selected.append("validation_error")
             selected.append("train_error")
