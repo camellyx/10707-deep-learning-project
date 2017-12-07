@@ -12,7 +12,7 @@ def count_agent_collisions(env):
     counts = []
     for i in range(env.n):
         collide_i = 0
-        for j in range(i+1, env.n):
+        for j in range(env.n):
             is_collide = is_collision(env.agents[i], env.agents[j])
             if is_collide and env.agents[i].adversary is not env.agents[j].adversary:
                 collide_i += 1
