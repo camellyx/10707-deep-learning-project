@@ -1,13 +1,10 @@
 import numpy as np
 import tensorflow as tf
-import os
 import pathlib
-
 import general_utilities
 
 
 class Actor:
-
     def __init__(self, scope, session, n_actions, action_bound,
                  eval_states, target_states, learning_rate=0.001, tau=0.01):
         self.session = session
@@ -16,6 +13,7 @@ class Actor:
         self.eval_states = eval_states
         self.target_states = target_states
         self.learning_rate = learning_rate
+        self.saver = tf.train.Saver()
 
         with tf.variable_scope(scope):
             self.eval_actions = self.build_network(self.eval_states,
@@ -30,8 +28,6 @@ class Actor:
 
         self.update_target = [tf.assign(t, (1 - tau) * t + tau * e)
                               for t, e in zip(self.target_weights, self.eval_weights)]
-
-        self.saver = tf.train.Saver()
 
     def build_network(self, x, scope, trainable):
         with tf.variable_scope(scope):
@@ -82,7 +78,6 @@ class Actor:
 
 
 class Critic:
-
     def __init__(self, scope, session, n_actions, actor_eval_actions,
                  actor_target_actions, eval_states, target_states,
                  rewards, learning_rate=0.001, gamma=0.9, tau=0.01):
@@ -93,6 +88,7 @@ class Critic:
         self.eval_states = eval_states
         self.target_states = target_states
         self.rewards = rewards
+        self.saver = tf.train.Saver()
 
         with tf.variable_scope(scope):
             self.eval_values = self.build_network(self.eval_states,
@@ -118,8 +114,6 @@ class Critic:
 
         self.update_target = [tf.assign(t, (1 - tau) * t + tau * e)
                               for t, e in zip(self.target_weights, self.eval_weights)]
-
-        self.saver = tf.train.Saver()
 
     def build_network(self, x1, x2, scope, trainable):
         with tf.variable_scope(scope):
