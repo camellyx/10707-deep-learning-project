@@ -168,7 +168,6 @@ if __name__ == '__main__':
 
     session.run(tf.global_variables_initializer())
 
-
     general_utilities.load_dqn_weights_if_exist(
         actors, args.experiment_prefix + args.weights_filename_prefix + "actor_", ".h5.index")
     general_utilities.load_dqn_weights_if_exist(
@@ -186,9 +185,9 @@ if __name__ == '__main__':
     # bookkeeping
     print("Finished {} episodes in {} seconds".format(args.episodes,
                                                       time.time() - start_time))
-    tf.summary.FileWriter("options.weights_filename_prefix", session.graph)
+    tf.summary.FileWriter(args.experiment_prefix + args.weights_filename_prefix, session.graph)
     general_utilities.save_dqn_weights(critics,
-                                       args.weights_filename_prefix + "critic_")
+                                       args.experiment_prefix + args.weights_filename_prefix + "critic_")
     general_utilities.save_dqn_weights(actors,
-                                       args.weights_filename_prefix + "actor_")
+                                       args.experiment_prefix + args.weights_filename_prefix + "actor_")
     statistics.dump(args.csv_filename_prefix + ".csv")
