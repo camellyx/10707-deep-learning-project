@@ -13,6 +13,7 @@ from dqn import DQN
 from memory import Memory
 from make_env import make_env
 import general_utilities
+import simple_tag_utilities
 
 def play(episodes, is_render, is_testing, checkpoint_interval, \
         weights_filename_prefix, csv_filename_prefix, batch_size):
@@ -21,6 +22,7 @@ def play(episodes, is_render, is_testing, checkpoint_interval, \
     statistics_header.extend(["reward_{}".format(i) for i in range(env.n)])
     statistics_header.extend(["loss_{}".format(i) for i in range(env.n)])
     statistics_header.extend(["eps_greedy_{}".format(i) for i in range(env.n)])
+    statistics_header.extend(["collisions_{}".format(i) for i in range(env.n)])
     print("Collecting statistics {}:".format(" ".join(statistics_header)))
     statistics = general_utilities.Time_Series_Statistics_Store(
         statistics_header)
@@ -74,6 +76,14 @@ def play(episodes, is_render, is_testing, checkpoint_interval, \
             statistic.extend([rewards[i] for i in range(env.n)])
             statistic.extend([losses[i] for i in range(env.n)])
             statistic.extend([dqns[i].eps_greedy for i in range(env.n)])
+            for i in range(env.n):
+                collide_i = 0
+                for j in range(i+1, env.n):
+                    is_collide = simple_tag_utilities.is_collision(env.agents[i], \
+                                                                   env.agents[j])
+                    if is_collide and env.agents[i].adversary is not env.agents[j].adversary:
+                        collide_i += 1
+                statistic.append(collide_i)
             statistics.add_statistics(statistic)
             if episode % 25 == 0:
                 print('Episode: ', episode, ' Rewards: ', rewards)
