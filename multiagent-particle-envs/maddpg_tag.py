@@ -80,14 +80,7 @@ def play(episodes, is_render, is_testing, checkpoint_interval, \
             statistic = [episode]
             statistic.extend([rewards[i] for i in range(env.n)])
             statistic.extend([losses[i] for i in range(env.n)])
-            for i in range(env.n):
-                collide_i = 0
-                for j in range(i+1, env.n):
-                    is_collide = simple_tag_utilities.is_collision(env.agents[i], \
-                                                                   env.agents[j])
-                    if is_collide and env.agents[i].adversary is not env.agents[j].adversary:
-                        collide_i += 1
-                statistic.append(collide_i)
+            statistic.extend(simple_tag_utilities.count_agent_collisions(env))
             statistics.add_statistics(statistic)
             if episode % 25 == 0:
                 print('Episode: ', episode, ' Rewards: ', rewards)
