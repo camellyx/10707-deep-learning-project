@@ -14,22 +14,23 @@ class Actor:
         self.eval_states = eval_states
         self.target_states = target_states
         self.learning_rate = learning_rate
+        self.scope = scope
 
-        with tf.variable_scope(scope):
+        with tf.variable_scope(self.scope):
             self.eval_actions = self.build_network(self.eval_states,
                                                    scope='eval', trainable=True)
             self.target_actions = self.build_network(self.target_states,
                                                      scope='target', trainable=False)
 
-        self.eval_weights = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES,
-                                              scope=scope + '/eval')
-        self.target_weights = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES,
-                                                scope=scope + '/target')
+            self.eval_weights = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES,
+                                                  scope=scope + '/eval')
+            self.target_weights = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES,
+                                                    scope=scope + '/target')
 
-        self.update_target = [tf.assign(t, (1 - tau) * t + tau * e)
-                              for t, e in zip(self.target_weights, self.eval_weights)]
+            self.update_target = [tf.assign(t, (1 - tau) * t + tau * e)
+                                  for t, e in zip(self.target_weights, self.eval_weights)]
 
-        self.saver = tf.train.Saver()
+            self.saver = tf.train.Saver()
 
     def build_network(self, x, scope, trainable):
         with tf.variable_scope(scope):
@@ -50,12 +51,13 @@ class Actor:
         return scaled_actions
 
     def add_gradients(self, action_gradients):
-        self.action_gradients = tf.gradients(ys=self.eval_actions,
-                                             xs=self.eval_weights,
-                                             grad_ys=action_gradients)
-        optimizer = tf.train.AdamOptimizer(-self.learning_rate)
-        self.optimize = optimizer.apply_gradients(zip(self.action_gradients,
-                                                      self.eval_weights))
+        with tf.variable_scope(self.scope):
+            self.action_gradients = tf.gradients(ys=self.eval_actions,
+                                                 xs=self.eval_weights,
+                                                 grad_ys=action_gradients)
+            optimizer = tf.train.AdamOptimizer(-self.learning_rate)
+            self.optimize = optimizer.apply_gradients(zip(self.action_gradients,
+                                                          self.eval_weights))
 
     def learn(self, states):
         self.session.run(self.optimize, feed_dict={self.eval_states: states})
@@ -100,24 +102,24 @@ class Critic:
                                                     self.actor_target_actions,
                                                     'target', trainable=False)
 
-        self.eval_weights = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES,
-                                              scope=scope + '/eval')
-        self.target_weights = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES,
-                                                scope=scope + '/target')
+            self.eval_weights = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES,
+                                                  scope=scope + '/eval')
+            self.target_weights = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES,
+                                                    scope=scope + '/target')
 
-        self.target = self.rewards + gamma * self.target_values
-        self.loss = tf.reduce_mean(tf.squared_difference(self.target,
-                                                         self.eval_values))
+            self.target = self.rewards + gamma * self.target_values
+            self.loss = tf.reduce_mean(tf.squared_difference(self.target,
+                                                             self.eval_values))
 
-        self.optimize = tf.train.AdamOptimizer(
-            learning_rate).minimize(self.loss)
-        self.action_gradients = tf.gradients(ys=self.eval_values,
-                                             xs=self.actor_eval_actions)[0]
+            self.optimize = tf.train.AdamOptimizer(
+                learning_rate).minimize(self.loss)
+            self.action_gradients = tf.gradients(ys=self.eval_values,
+                                                 xs=self.actor_eval_actions)[0]
 
-        self.update_target = [tf.assign(t, (1 - tau) * t + tau * e)
-                              for t, e in zip(self.target_weights, self.eval_weights)]
+            self.update_target = [tf.assign(t, (1 - tau) * t + tau * e)
+                                  for t, e in zip(self.target_weights, self.eval_weights)]
 
-        self.saver = tf.train.Saver()
+            self.saver = tf.train.Saver()
 
     def build_network(self, x1, x2, scope, trainable):
         with tf.variable_scope(scope):
