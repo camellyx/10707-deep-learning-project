@@ -30,10 +30,10 @@ class Actor:
         with tf.variable_scope(scope):
             W = tf.random_normal_initializer(0.0, 0.1)
             b = tf.constant_initializer(0.1)
-            h1 = tf.layers.dense(x, 30, activation=tf.nn.relu,
+            h1 = tf.layers.dense(x, 50, activation=tf.nn.relu,
                                  kernel_initializer=W, bias_initializer=b,
                                  name='h1', trainable=trainable)
-            h2 = tf.layers.dense(h1, 30, activation=tf.nn.relu,
+            h2 = tf.layers.dense(h1, 50, activation=tf.nn.relu,
                                  kernel_initializer=W, bias_initializer=b,
                                  name='h2', trainable=trainable)
             actions = tf.layers.dense(h2, self.n_actions, activation=tf.nn.tanh,
@@ -102,14 +102,14 @@ class Critic:
         with tf.variable_scope(scope):
             W = tf.random_normal_initializer(0.0, 0.1)
             b = tf.constant_initializer(0.1)
-            h1 = tf.layers.dense(x1, 30, activation=tf.nn.relu,
+            h1 = tf.layers.dense(x1, 50, activation=tf.nn.relu,
                                  kernel_initializer=W, bias_initializer=b,
                                  name='h1', trainable=trainable)
-            h21 = tf.get_variable('h21', [30, 30],
+            h21 = tf.get_variable('h21', [50, 50],
                                   initializer=W, trainable=trainable)
-            h22 = tf.get_variable('h22', [self.n_actions, 30],
+            h22 = tf.get_variable('h22', [self.n_actions, 50],
                                   initializer=W, trainable=trainable)
-            b2 = tf.get_variable('b2', [1, 30],
+            b2 = tf.get_variable('b2', [1, 50],
                                  initializer=b, trainable=trainable)
             h3 = tf.nn.relu(tf.matmul(h1, h21) + tf.matmul(x2, h22) + b2)
             values = tf.layers.dense(h3, 1, kernel_initializer=W,

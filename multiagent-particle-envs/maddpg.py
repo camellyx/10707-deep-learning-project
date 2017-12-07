@@ -48,12 +48,12 @@ class Critic:
 
             first = True
             for i in range(len(x1)):
-                h1 = tf.layers.dense(x1[i], 30, activation=tf.nn.relu,
+                h1 = tf.layers.dense(x1[i], 50, activation=tf.nn.relu,
                                      kernel_initializer=W, bias_initializer=b,
                                      name='h1-' + str(i), trainable=trainable)
-                h21 = tf.get_variable('h21-' + str(i), [30, 30],
+                h21 = tf.get_variable('h21-' + str(i), [50, 50],
                                       initializer=W, trainable=trainable)
-                h22 = tf.get_variable('h22-' + str(i), [self.n_actions[i], 30],
+                h22 = tf.get_variable('h22-' + str(i), [self.n_actions[i], 50],
                                       initializer=W, trainable=trainable)
 
                 if first == True:
@@ -62,7 +62,7 @@ class Critic:
                 else:
                     h3 = h3 + tf.matmul(h1, h21) + tf.matmul(x2[i], h22)
 
-            b2 = tf.get_variable('b2', [1, 30], initializer=b,
+            b2 = tf.get_variable('b2', [1, 50], initializer=b,
                                  trainable=trainable)
             h3 = tf.nn.relu(h3 + b2)
             values = tf.layers.dense(h3, 1, kernel_initializer=W,
