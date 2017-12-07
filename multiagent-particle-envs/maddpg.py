@@ -13,7 +13,6 @@ class Actor:
         self.eval_states = eval_states
         self.target_states = target_states
         self.learning_rate = learning_rate
-        self.saver = tf.train.Saver()
 
         with tf.variable_scope(scope):
             self.eval_actions = self.build_network(self.eval_states,
@@ -28,6 +27,9 @@ class Actor:
 
         self.update_target = [tf.assign(t, (1 - tau) * t + tau * e)
                               for t, e in zip(self.target_weights, self.eval_weights)]
+
+        # Must be last
+        self.saver = tf.train.Saver()
 
     def build_network(self, x, scope, trainable):
         with tf.variable_scope(scope):
