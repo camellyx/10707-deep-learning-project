@@ -19,7 +19,8 @@ import simple_tag_utilities
 def play(episodes, is_render, is_testing, checkpoint_interval,
          weights_filename_prefix, csv_filename_prefix, batch_size):
     # init statistics. NOTE: simple tag specific!
-    statistics_header = ["epoch"]
+    statistics_header = ["episode"]
+    statistics_header.append("steps")
     statistics_header.extend(["reward_{}".format(i) for i in range(env.n)])
     statistics_header.extend(["loss_{}".format(i) for i in range(env.n)])
     statistics_header.extend(["eps_greedy_{}".format(i) for i in range(env.n)])
@@ -96,16 +97,14 @@ def play(episodes, is_render, is_testing, checkpoint_interval,
                 episode_losses = episode_losses / steps
 
                 statistic = [episode]
+                statistic.append(steps)
                 statistic.extend([episode_rewards[i] for i in range(env.n)])
                 statistic.extend([episode_losses[i] for i in range(env.n)])
                 statistic.extend([dqns[i].eps_greedy for i in range(env.n)])
                 statistic.extend(collision_count.tolist())
                 statistics.add_statistics(statistic)
                 if episode % 25 == 0:
-                    print('Episode: ', episode,
-                          ' Steps: ', steps,
-                          ' Rewards: ', episode_rewards,
-                          ' Losses: ', episode_losses)
+                    print(statistics.summarize_last())
                 break
 
     return statistics

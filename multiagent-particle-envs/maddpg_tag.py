@@ -30,6 +30,11 @@ def play(episodes, is_render, is_testing, checkpoint_interval, \
     statistics_header.extend(["reward_{}".format(i) for i in range(env.n)])
     statistics_header.extend(["loss_{}".format(i) for i in range(env.n)])
     statistics_header.extend(["collisions_{}".format(i) for i in range(env.n)])
+    statistics_header.extend(["ou_theta_{}".format(i) for i in range(env.n)])
+    statistics_header.extend(["ou_mu_{}".format(i) for i in range(env.n)])
+    statistics_header.extend(["ou_sigma_{}".format(i) for i in range(env.n)])
+    statistics_header.extend(["ou_dt_{}".format(i) for i in range(env.n)])
+    statistics_header.extend(["ou_x0_{}".format(i) for i in range(env.n)])
     print("Collecting statistics {}:".format(" ".join(statistics_header)))
     statistics = general_utilities.Time_Series_Statistics_Store(
         statistics_header)
@@ -81,9 +86,14 @@ def play(episodes, is_render, is_testing, checkpoint_interval, \
             statistic.extend([rewards[i] for i in range(env.n)])
             statistic.extend([losses[i] for i in range(env.n)])
             statistic.extend(simple_tag_utilities.count_agent_collisions(env))
+            statistic.extend([actors_noise[i].theta for i in range(env.n)])
+            statistic.extend([actors_noise[i].mu for i in range(env.n)])
+            statistic.extend([actors_noise[i].sigma for i in range(env.n)])
+            statistic.extend([actors_noise[i].dt for i in range(env.n)])
+            statistic.extend([actors_noise[i].x0 for i in range(env.n)])
             statistics.add_statistics(statistic)
             if episode % 25 == 0:
-                print('Episode: ', episode, ' Rewards: ', rewards)
+                print(statistics.summarize_last())
 
         # reset states if done
         if any(done):

@@ -73,3 +73,11 @@ class Time_Series_Statistics_Store(object):
             wr.writerow(self.header)
             for stat in self.statistics:
                 wr.writerow(stat)
+    def summarize_last(self):
+        summary = ""
+        for i in range(len(self.header)):
+            if isinstance(self.statistics[-1][i], float):
+                summary += "{}: {:.3f},".format(self.header[i], self.statistics[-1][i])
+            else:
+                summary += "{}: {},".format(self.header[i], self.statistics[-1][i])
+        return summary
