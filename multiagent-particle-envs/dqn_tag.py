@@ -19,57 +19,69 @@ BATCH_SIZE = 64
 
 
 def play():
-    states = env.reset()
     for episode in range(args.episodes):
-        # render
-        if args.render:
-            env.render()
+        states = env.reset()
+        episode_losses = np.array([0.0] * env.n)
+        episode_rewards = np.array([0.0] * env.n)
+        steps = 0
 
-        # act
-        actions = []
-        actions_onehot = []
-        for i in range(env.n):
-            action = dqns[i].choose_action(states[i])
-            speed = 0.9 if env.agents[i].adversary else 1
+        while True:
+            steps += 1
 
-            onehot_action = np.zeros(n_actions[i])
-            onehot_action[action] = speed
-            actions_onehot.append(onehot_action)
-            actions.append(action)
+            # render
+            if args.render:
+                env.render()
 
-        # step
-        states_next, rewards, done, info = env.step(actions_onehot)
-
-        # learn
-        if not args.testing:
-            losses = []
-            size = memories[0].pointer
-            batch = random.sample(range(size), size) if size < BATCH_SIZE else random.sample(
-                range(size), BATCH_SIZE)
-
+            # act
+            actions = []
+            actions_onehot = []
             for i in range(env.n):
-                if done[i]:
-                    rewards[i] *= 100
+                action = dqns[i].choose_action(states[i])
+                speed = 0.9 if env.agents[i].adversary else 1
 
-                memories[i].remember(states[i], actions[i],
-                                     rewards[i], states_next[i], done[i])
+                onehot_action = np.zeros(n_actions[i])
+                onehot_action[action] = speed
+                actions_onehot.append(onehot_action)
+                actions.append(action)
 
-                if memories[i].pointer > BATCH_SIZE * 10:
-                    history = dqns[i].learn(*memories[i].sample(batch))
-                    losses.append(history.history["loss"][0])
-                else:
-                    losses.append(-1)
+            # step
+            states_next, rewards, done, info = env.step(actions_onehot)
+            episode_rewards += rewards
 
-            states = states_next
+            # learn
+            if not args.testing:
+                size = memories[0].pointer
+                batch = random.sample(range(size), size) if size < BATCH_SIZE else random.sample(
+                    range(size), BATCH_SIZE)
 
-            # collect statistics and print rewards. NOTE: simple tag specific!
-            statistics.add_statistics([episode, rewards[0], rewards[1],
-                                       losses[0], losses[1]])
-            print('Episode: ', episode, ' Rewards: ', rewards)
+                for i in range(env.n):
+                    if done[i]:
+                        rewards[i] *= 100
 
-        # reset states if done
-        if any(done):
-            states = env.reset()
+                    memories[i].remember(states[i], actions[i],
+                                         rewards[i], states_next[i], done[i])
+
+                    if memories[i].pointer > BATCH_SIZE * 10:
+                        history = dqns[i].learn(*memories[i].sample(batch))
+                        episode_losses[i] += history.history["loss"][0]
+                    else:
+                        episode_losses[i] = -1
+
+                states = states_next
+
+            # reset states if done
+            if any(done):
+                # collect statistics and print rewards
+                episode_rewards = episode_rewards / steps
+                episode_losses = episode_losses / steps
+                statistics.add_statistics([episode,
+                                           episode_rewards[0], episode_rewards[1],
+                                           episode_losses[0], episode_losses[1]])
+                print('Episode: ', episode,
+                      ' Steps: ', steps,
+                      ' Rewards: ', episode_rewards,
+                      ' Losses: ', episode_losses)
+                break
 
 
 if __name__ == '__main__':

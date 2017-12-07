@@ -25,56 +25,67 @@ BATCH_SIZE = 64
 
 
 def play():
-    states = env.reset()
     for episode in range(args.episodes):
-        # render
-        if args.render:
-            env.render()
+        states = env.reset()
+        episode_losses = np.array([0.0] * env.n)
+        episode_rewards = np.array([0.0] * env.n)
+        steps = 0
 
-        # act
-        actions = []
-        for i in range(env.n):
-            action = np.clip(
-                actors[i].choose_action(states[i]) + actors_noise[i](), -2, 2)
-            actions.append(action)
+        while True:
+            steps += 1
 
-        # step
-        states_next, rewards, done, info = env.step(actions)
+            # render
+            if args.render:
+                env.render()
 
-        # learn
-        if not args.testing:
-            losses = []
-            size = memories[0].pointer
-            batch = random.sample(range(size), size) if size < BATCH_SIZE else random.sample(
-                range(size), BATCH_SIZE)
-
+            # act
+            actions = []
             for i in range(env.n):
-                if done[i]:
-                    rewards[i] *= 100
+                action = np.clip(
+                    actors[i].choose_action(states[i]) + actors_noise[i](), -2, 2)
+                actions.append(action)
 
-                memories[i].remember(states[i], actions[i],
-                                     rewards[i], states_next[i], done[i])
+            # step
+            states_next, rewards, done, info = env.step(actions)
+            episode_rewards += rewards
 
-                if memories[i].pointer > BATCH_SIZE * 10:
-                    s, a, r, sn, _ = memories[i].sample(batch)
-                    r = np.reshape(r, (BATCH_SIZE, 1))
-                    critics[i].learn(s, a, r, sn)
-                    actors[i].learn(s)
-                    # TODO: losses.append(history.history["loss"][0])
-                    losses.append(0)
-                else:
-                    losses.append(-1)
+            # learn
+            if not args.testing:
+                size = memories[0].pointer
+                batch = random.sample(range(size), size) if size < BATCH_SIZE else random.sample(
+                    range(size), BATCH_SIZE)
 
-            states = states_next
+                for i in range(env.n):
+                    if done[i]:
+                        rewards[i] *= 100
 
-            # collect statistics and print rewards. NOTE: simple tag specific!
-            statistics.add_statistics([episode, rewards[0], rewards[1],
-                                       losses[0], losses[1]])
-            print('Episode: ', episode, ' Rewards: ', rewards)
+                    memories[i].remember(states[i], actions[i],
+                                         rewards[i], states_next[i], done[i])
 
-        # reset states if done
-        if any(done):
-            states = env.reset()
+                    if memories[i].pointer > BATCH_SIZE * 10:
+                        s, a, r, sn, _ = memories[i].sample(batch)
+                        r = np.reshape(r, (BATCH_SIZE, 1))
+                        critics[i].learn(s, a, r, sn)
+                        actors[i].learn(s)
+                        # TODO: episode_losses[i] += history.history["loss"][0]
+                    else:
+                        episode_losses[i] = -1
+
+                states = states_next
+
+            # reset states if done
+            if any(done):
+                # collect statistics and print rewards
+                episode_rewards = episode_rewards / steps
+                episode_losses = episode_losses / steps
+                statistics.add_statistics([episode,
+                                           episode_rewards[0], episode_rewards[1],
+                                           episode_losses[0], episode_losses[1]])
+                print('Episode: ', episode,
+                      ' Steps: ', steps,
+                      ' Rewards: ', episode_rewards,
+                      ' Losses: ', episode_losses)
+                break
 
 
 if __name__ == '__main__':

@@ -2,6 +2,69 @@ import numpy as np
 import tensorflow as tf
 
 
+class Actor:
+    def __init__(self, scope, session, n_actions, action_bound,
+                 eval_states, target_states, learning_rate=0.001, tau=0.01):
+        self.session = session
+        self.n_actions = n_actions
+        self.action_bound = action_bound
+        self.eval_states = eval_states
+        self.target_states = target_states
+        self.learning_rate = learning_rate
+
+        with tf.variable_scope(scope):
+            self.eval_actions = self.build_network(self.eval_states,
+                                                   scope='eval', trainable=True)
+            self.target_actions = self.build_network(self.target_states,
+                                                     scope='target', trainable=False)
+
+        self.eval_weights = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES,
+                                              scope=scope + '/eval')
+        self.target_weights = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES,
+                                                scope=scope + '/target')
+
+        self.update_target = [tf.assign(t, (1 - tau) * t + tau * e)
+                              for t, e in zip(self.target_weights, self.eval_weights)]
+
+    def build_network(self, x, scope, trainable):
+        with tf.variable_scope(scope):
+            W = tf.random_normal_initializer(0.0, 0.1)
+            b = tf.constant_initializer(0.1)
+            h1 = tf.layers.dense(x, 50, activation=tf.nn.relu,
+                                 kernel_initializer=W, bias_initializer=b,
+                                 name='h1', trainable=trainable)
+            h2 = tf.layers.dense(h1, 50, activation=tf.nn.relu,
+                                 kernel_initializer=W, bias_initializer=b,
+                                 name='h2', trainable=trainable)
+            actions = tf.layers.dense(h2, self.n_actions, activation=tf.nn.tanh,
+                                      kernel_initializer=W, bias_initializer=b,
+                                      name='actions', trainable=trainable)
+            scaled_actions = tf.multiply(actions, self.action_bound,
+                                         name='scaled_actions')
+
+        return scaled_actions
+
+    def add_gradients(self, action_gradients):
+        self.action_gradients = tf.gradients(ys=self.eval_actions,
+                                             xs=self.eval_weights,
+                                             grad_ys=action_gradients)
+        optimizer = tf.train.AdamOptimizer(-self.learning_rate)
+        self.optimize = optimizer.apply_gradients(zip(self.action_gradients,
+                                                      self.eval_weights))
+
+    def learn(self, actors, states):
+        a = {}
+        for i in range(len(states)):
+            a[actors[i].eval_states] = states[i]
+
+        self.session.run(self.optimize, feed_dict={**a})
+        self.session.run(self.update_target)
+
+    def choose_action(self, state):
+        return self.session.run(self.eval_actions,
+                                feed_dict={self.eval_states: state[np.newaxis, :]})[0]
+
+
 class Critic:
     def __init__(self, scope, session, n_actions, actors_eval_actions,
                  actors_target_actions, eval_states, target_states,
