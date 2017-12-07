@@ -9,9 +9,9 @@ class Scenario(BaseScenario):
         # set any world properties first
         world.dim_c = 2
         num_good_agents = 1
-        num_adversaries = 1
+        num_adversaries = 2
         num_agents = num_adversaries + num_good_agents
-        num_landmarks = 2
+        num_landmarks = 0
         # add agents
         world.agents = [Agent() for i in range(num_agents)]
         for i, agent in enumerate(world.agents):
