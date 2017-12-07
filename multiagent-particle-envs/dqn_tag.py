@@ -15,8 +15,9 @@ from make_env import make_env
 import general_utilities
 import simple_tag_utilities
 
-def play(episodes, is_render, is_testing, checkpoint_interval, \
-        weights_filename_prefix, csv_filename_prefix, batch_size):
+
+def play(episodes, is_render, is_testing, checkpoint_interval,
+         weights_filename_prefix, csv_filename_prefix, batch_size):
     # init statistics. NOTE: simple tag specific!
     statistics_header = ["epoch"]
     statistics_header.extend(["reward_{}".format(i) for i in range(env.n)])
@@ -27,71 +28,85 @@ def play(episodes, is_render, is_testing, checkpoint_interval, \
     statistics = general_utilities.Time_Series_Statistics_Store(
         statistics_header)
 
-    states = env.reset()
+    for episode in range(args.episodes):
+        states = env.reset()
+        episode_losses = np.zeros(env.n)
+        episode_rewards = np.zeros(env.n)
+        collision_count = np.zeros(env.n)
+        steps = 0
 
-    for episode in range(episodes):
-        # render
-        if is_render:
-            env.render()
+        while True:
+            steps += 1
 
-        # act
-        actions = []
-        actions_onehot = []
-        for i in range(env.n):
-            action = dqns[i].choose_action(states[i])
-            speed = 0.9 if env.agents[i].adversary else 1
+            # render
+            if args.render:
+                env.render()
 
-            onehot_action = np.zeros(n_actions[i])
-            onehot_action[action] = speed
-            actions_onehot.append(onehot_action)
-            actions.append(action)
-
-        # step
-        states_next, rewards, done, info = env.step(actions_onehot)
-
-        # learn
-        if not is_testing:
-            losses = []
-            size = memories[0].pointer
-            batch = random.sample(range(size), size) if size < batch_size else random.sample(
-                range(size), batch_size)
-
+            # act
+            actions = []
+            actions_onehot = []
             for i in range(env.n):
-                if done[i]:
-                    rewards[i] *= 100
+                action = dqns[i].choose_action(states[i])
+                speed = 0.9 if env.agents[i].adversary else 1
 
-                memories[i].remember(states[i], actions[i],
-                                     rewards[i], states_next[i], done[i])
+                onehot_action = np.zeros(n_actions[i])
+                onehot_action[action] = speed
+                actions_onehot.append(onehot_action)
+                actions.append(action)
 
-                if memories[i].pointer > batch_size * 10:
-                    history = dqns[i].learn(*memories[i].sample(batch))
-                    losses.append(history.history["loss"][0])
-                else:
-                    losses.append(-1)
+            # step
+            states_next, rewards, done, info = env.step(actions_onehot)
+            episode_rewards += rewards
+            collision_count += np.array(
+                simple_tag_utilities.count_agent_collisions(env))
 
-            states = states_next
+            # learn
+            if not args.testing:
+                size = memories[0].pointer
+                batch = random.sample(range(size), size) if size < batch_size else random.sample(
+                    range(size), batch_size)
 
-            # collect statistics and print rewards. NOTE: simple tag specific!
-            statistic = [episode]
-            statistic.extend([rewards[i] for i in range(env.n)])
-            statistic.extend([losses[i] for i in range(env.n)])
-            statistic.extend([dqns[i].eps_greedy for i in range(env.n)])
-            statistic.extend(simple_tag_utilities.count_agent_collisions(env))
-            statistics.add_statistics(statistic)
-            if episode % 25 == 0:
-                print('Episode: ', episode, ' Rewards: ', rewards)
+                for i in range(env.n):
+                    if done[i]:
+                        rewards[i] *= 100
 
-        # reset states if done
-        if any(done):
-            states = env.reset()
+                    memories[i].remember(states[i], actions[i],
+                                         rewards[i], states_next[i], done[i])
 
-        if episode % checkpoint_interval == 0:
-            statistics.dump("{}_{}.csv".format(csv_filename_prefix, episode))
-            general_utilities.save_dqn_weights(dqns, \
-                    "{}_{}_".format(weights_filename_prefix, episode))
-            if episode >= checkpoint_interval:
-                os.remove("{}_{}.csv".format(csv_filename_prefix, \
-                        episode - checkpoint_interval))
+                    if memories[i].pointer > batch_size * 10:
+                        history = dqns[i].learn(*memories[i].sample(batch))
+                        episode_losses[i] += history.history["loss"][0]
+                    else:
+                        episode_losses[i] = -1
+
+                states = states_next
+
+            if episode % checkpoint_interval == 0:
+                statistics.dump("{}_{}.csv".format(csv_filename_prefix,
+                                                   episode))
+                general_utilities.save_dqn_weights(dqns,
+                                                   "{}_{}_".format(weights_filename_prefix, episode))
+                if episode >= checkpoint_interval:
+                    os.remove("{}_{}.csv".format(csv_filename_prefix,
+                                                 episode - checkpoint_interval))
+
+            # reset states if done
+            if any(done):
+                episode_rewards = episode_rewards / steps
+                episode_losses = episode_losses / steps
+
+                statistic = [episode]
+                statistic.extend([episode_rewards[i] for i in range(env.n)])
+                statistic.extend([episode_losses[i] for i in range(env.n)])
+                statistic.extend([dqns[i].eps_greedy for i in range(env.n)])
+                statistic.extend(collision_count.tolist())
+                statistics.add_statistics(statistic)
+                if episode % 25 == 0:
+                    print('Episode: ', episode,
+                          ' Steps: ', steps,
+                          ' Rewards: ', episode_rewards,
+                          ' Losses: ', episode_losses)
+                break
 
     return statistics
 
@@ -119,7 +134,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     general_utilities.dump_dict_as_json(vars(args),
-            args.experiment_prefix + "/save/run_parameters.json")
+                                        args.experiment_prefix + "/save/run_parameters.json")
 
     # init env
     env = make_env(args.env, args.benchmark)
@@ -143,13 +158,14 @@ if __name__ == '__main__':
 
     # play
     statistics = play(args.episodes, args.render, args.testing,
-            args.checkpoint_frequency,
-            args.experiment_prefix + args.weights_filename_prefix,
-            args.experiment_prefix + args.csv_filename_prefix,
-            args.batch_size)
+                      args.checkpoint_frequency,
+                      args.experiment_prefix + args.weights_filename_prefix,
+                      args.experiment_prefix + args.csv_filename_prefix,
+                      args.batch_size)
 
     # bookkeeping
     print("Finished {} episodes in {} seconds".format(args.episodes,
                                                       time.time() - start_time))
-    general_utilities.save_dqn_weights(dqns, args.experiment_prefix + args.weights_filename_prefix)
+    general_utilities.save_dqn_weights(
+        dqns, args.experiment_prefix + args.weights_filename_prefix)
     statistics.dump(args.experiment_prefix + args.csv_filename_prefix + ".csv")

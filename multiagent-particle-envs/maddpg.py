@@ -34,10 +34,10 @@ class Actor:
         with tf.variable_scope(scope):
             W = tf.random_normal_initializer(0.0, 0.1)
             b = tf.constant_initializer(0.1)
-            h1 = tf.layers.dense(x, 50, activation=tf.nn.relu,
+            h1 = tf.layers.dense(x, 40, activation=tf.nn.relu,
                                  kernel_initializer=W, bias_initializer=b,
                                  name='h1', trainable=trainable)
-            h2 = tf.layers.dense(h1, 50, activation=tf.nn.relu,
+            h2 = tf.layers.dense(h1, 40, activation=tf.nn.relu,
                                  kernel_initializer=W, bias_initializer=b,
                                  name='h2', trainable=trainable)
             actions = tf.layers.dense(h2, self.n_actions, activation=tf.nn.tanh,
@@ -130,12 +130,12 @@ class Critic:
 
             first = True
             for i in range(len(x1)):
-                h1 = tf.layers.dense(x1[i], 50, activation=tf.nn.relu,
+                h1 = tf.layers.dense(x1[i], 40, activation=tf.nn.relu,
                                      kernel_initializer=W, bias_initializer=b,
                                      name='h1-' + str(i), trainable=trainable)
-                h21 = tf.get_variable('h21-' + str(i), [50, 50],
+                h21 = tf.get_variable('h21-' + str(i), [40, 40],
                                       initializer=W, trainable=trainable)
-                h22 = tf.get_variable('h22-' + str(i), [self.n_actions[i], 50],
+                h22 = tf.get_variable('h22-' + str(i), [self.n_actions[i], 40],
                                       initializer=W, trainable=trainable)
 
                 if first == True:
@@ -144,7 +144,7 @@ class Critic:
                 else:
                     h3 = h3 + tf.matmul(h1, h21) + tf.matmul(x2[i], h22)
 
-            b2 = tf.get_variable('b2', [1, 50], initializer=b,
+            b2 = tf.get_variable('b2', [1, 40], initializer=b,
                                  trainable=trainable)
             h3 = tf.nn.relu(h3 + b2)
             values = tf.layers.dense(h3, 1, kernel_initializer=W,
