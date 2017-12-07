@@ -27,7 +27,6 @@ def play(episodes, is_render, is_testing, checkpoint_interval, \
         statistics_header)
 
     states = env.reset()
-    speed = 0.1
 
     for episode in range(episodes):
         # render
