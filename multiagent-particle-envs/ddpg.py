@@ -127,8 +127,9 @@ class Critic:
         return values
 
     def learn(self, states, actions, rewards, states_next):
-        self.session.run(self.optimize, feed_dict={self.eval_states: states,
-                                                   self.actor_eval_actions: actions,
-                                                   self.rewards: rewards,
-                                                   self.target_states: states_next})
+        loss, _ = self.session.run([self.loss, self.optimize], feed_dict={self.eval_states: states,
+                                                                          self.actor_eval_actions: actions,
+                                                                          self.rewards: rewards,
+                                                                          self.target_states: states_next})
         self.session.run(self.update_target)
+        return loss

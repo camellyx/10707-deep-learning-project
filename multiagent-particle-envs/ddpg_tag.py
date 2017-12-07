@@ -16,9 +16,12 @@ from ornstein_uhlenbeck import OrnsteinUhlenbeckActionNoise
 from make_env import make_env
 import general_utilities
 
+from monitor import MyMonitor
+
 
 def play():
     states = env.reset()
+    episode_reward = np.zeros(env.n)
     for episode in range(args.episodes):
         # render
         if args.render:
@@ -33,6 +36,7 @@ def play():
 
         # step
         states_next, rewards, done, info = env.step(actions)
+        episode_reward += np.array(rewards)
 
         # learn
         if not args.testing:
@@ -51,10 +55,9 @@ def play():
                 if memories[i].pointer > args.batch_size * 10:
                     s, a, r, sn, _ = memories[i].sample(batch)
                     r = np.reshape(r, (args.batch_size, 1))
-                    critics[i].learn(s, a, r, sn)
+                    loss = critics[i].learn(s, a, r, sn)
                     actors[i].learn(s)
-                    # TODO: losses.append(history.history["loss"][0])
-                    losses.append(0)
+                    losses.append(loss)
                 else:
                     losses.append(-1)
 
@@ -71,6 +74,7 @@ def play():
         # reset states if done
         if any(done):
             states = env.reset()
+            episode_reward = 0
 
         if (episode + 1) % args.checkpoint_frequency == 0:
             statistics.dump(os.path.join(args.csv_filename_prefix,
@@ -78,6 +82,33 @@ def play():
             save_path = saver.save(session, os.path.join(
                 args.weights_filename_prefix, "models"), global_step=episode + 1)
             print("saving model to {}".format(save_path))
+
+
+def test():
+    states = env.reset()
+    episode_reward = 0
+    for episode in range(args.episodes):
+        # render
+        if args.render:
+            env.render()
+
+        # act
+        actions = []
+        for i in range(env.env.n):
+            action = np.clip(
+                actors[i].choose_action(states[i]) + actors_noise[i](), -2, 2)
+            actions.append(action)
+
+        # step
+        states_next, rewards, done, info = env.step(actions)
+        states = states_next
+        episode_reward += np.array(rewards)
+
+        print('Episode: ', episode, ' Rewards: ', episode_reward)
+
+        # reset states if done
+        if any(done):
+            states = env.reset()
 
 
 if __name__ == '__main__':
@@ -89,6 +120,8 @@ if __name__ == '__main__':
     parser.add_argument('--benchmark', default=False, action="store_true")
     parser.add_argument('--experiment_prefix', default="save/",
                         help="directory to store all experiment data")
+    parser.add_argument('--video_dir', default="videos/",
+                        help="directory to store all videos data")
     parser.add_argument('--weights_filename_prefix', default='',
                         help="where to store/load network weights")
     parser.add_argument('--csv_filename_prefix', default='',
@@ -124,17 +157,18 @@ if __name__ == '__main__':
 
     # init env
     env = make_env(args.env, args.benchmark)
-    # if not os.path.exists(args.video_dir):
-    #     os.makedirs(args.video_dir)
-    # args.video_dir = os.path.join(
-    #     args.video_dir, 'monitor-' + time.strftime("%y-%m-%d-%H-%M"))
-    # if not os.path.exists(args.video_dir):
-    #     os.makedirs(args.video_dir)
-    # env = MyMonitor(env, args.video_dir,
-    #                 # resume=True, write_upon_reset=True,
-    #                 video_callable=lambda episode: (
-    #                     episode + 1) % args.video_interval == 0,
-    #                 force=True)
+    if not os.path.exists(args.video_dir):
+        os.makedirs(args.video_dir)
+    args.video_dir = os.path.join(
+        args.video_dir, 'monitor-' + time.strftime("%y-%m-%d-%H-%M"))
+    if not os.path.exists(args.video_dir):
+        os.makedirs(args.video_dir)
+    if args.testing:
+        env = MyMonitor(env, args.video_dir,
+                        # resume=True, write_upon_reset=True,
+                        video_callable=lambda episode: (
+                            episode + 1) % 1 == 0,
+                        force=True)
 
     # set random seed
     env.seed(args.random_seed)
@@ -145,6 +179,10 @@ if __name__ == '__main__':
     # init actors and critics
     session = tf.Session()
 
+    if args.testing:
+        n_agents = env.env.n
+    else:
+        n_agents = env.n
     n_actions = []
     state_sizes = []
     states_placeholder = []
@@ -154,9 +192,12 @@ if __name__ == '__main__':
     critics = []
     actors_noise = []
     memories = []
-    for i in range(env.n):
+    for i in range(n_agents):
         n_actions.append(env.action_space[i].n)
-        state_sizes.append(env.observation_space[i].shape[0])
+        if args.testing:
+            state_sizes.append(env.env.observation_space[i].shape[0])
+        else:
+            state_sizes.append(env.observation_space[i].shape[0])
         states_placeholder.append(tf.placeholder(
             tf.float32, shape=[None, state_sizes[i]]))
         rewards_placeholder.append(tf.placeholder(tf.float32, [None, 1]))
@@ -172,15 +213,15 @@ if __name__ == '__main__':
         actors_noise.append(OrnsteinUhlenbeckActionNoise(
             mu=np.zeros(n_actions[i])))
         memories.append(
-            Memory(args.memory_size, env.n * state_sizes[i] + n_actions[i] + 2))
+            Memory(args.memory_size, n_agents * state_sizes[i] + n_actions[i] + 2))
 
     session.run(tf.global_variables_initializer())
     saver = tf.train.Saver(max_to_keep=10000000)
 
     # init statistics. NOTE: simple tag specific!
     statistics_header = ["epoch"]
-    statistics_header.extend(["reward_{}".format(i) for i in range(env.n)])
-    statistics_header.extend(["loss_{}".format(i) for i in range(env.n)])
+    statistics_header.extend(["reward_{}".format(i) for i in range(n_agents)])
+    statistics_header.extend(["loss_{}".format(i) for i in range(n_agents)])
     print("Collecting statistics {}:".format(" ".join(statistics_header)))
     statistics = general_utilities.Time_Series_Statistics_Store(
         statistics_header)
@@ -193,7 +234,10 @@ if __name__ == '__main__':
     start_time = time.time()
 
     # play
-    play()
+    if args.testing:
+        test()
+    else:
+        play()
 
     # bookkeeping
     print("Finished {} episodes in {} seconds".format(args.episodes,
