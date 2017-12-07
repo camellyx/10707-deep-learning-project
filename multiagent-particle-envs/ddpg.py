@@ -5,6 +5,7 @@ import general_utilities
 
 
 class Actor:
+
     def __init__(self, scope, session, n_actions, action_bound,
                  eval_states, target_states, learning_rate=0.001, tau=0.01):
         self.session = session
@@ -79,6 +80,7 @@ class Actor:
 
 
 class Critic:
+
     def __init__(self, scope, session, n_actions, actor_eval_actions,
                  actor_target_actions, eval_states, target_states,
                  rewards, learning_rate=0.001, gamma=0.9, tau=0.01):
@@ -138,11 +140,12 @@ class Critic:
         return values
 
     def learn(self, states, actions, rewards, states_next):
-        self.session.run(self.optimize, feed_dict={self.eval_states: states,
-                                                   self.actor_eval_actions: actions,
-                                                   self.rewards: rewards,
-                                                   self.target_states: states_next})
+        loss, _ = self.session.run([self.loss, self.optimize], feed_dict={self.eval_states: states,
+                                                                          self.actor_eval_actions: actions,
+                                                                          self.rewards: rewards,
+                                                                          self.target_states: states_next})
         self.session.run(self.update_target)
+        return loss
 
     def load(self, name):
         latest_ckpt = tf.train.latest_checkpoint(name)
