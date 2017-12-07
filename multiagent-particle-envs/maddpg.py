@@ -6,7 +6,7 @@ import general_utilities
 
 class Actor:
     def __init__(self, scope, session, n_actions, action_bound,
-                 eval_states, target_states, learning_rate=0.001, tau=0.01):
+                 eval_states, target_states, learning_rate=0.0001, tau=0.01):
         self.session = session
         self.n_actions = n_actions
         self.action_bound = action_bound
