@@ -83,7 +83,7 @@ def play(episodes, is_render, is_testing, checkpoint_interval, \
             statistic.extend(simple_tag_utilities.count_agent_collisions(env))
             statistics.add_statistics(statistic)
             if episode % 25 == 0:
-                print('Episode: ', episode, ' Rewards: ', rewards)
+                print(statistics.summarize_last())
 
         # reset states if done
         if any(done):
