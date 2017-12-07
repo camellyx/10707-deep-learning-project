@@ -57,9 +57,6 @@ def play(episodes, is_render, is_testing, checkpoint_interval,
 
             # step
             states_next, rewards, done, info = env.step(actions)
-            episode_rewards += rewards
-            collision_count += np.array(
-                simple_tag_utilities.count_agent_collisions(env))
 
             # learn
             if not args.testing:
@@ -69,7 +66,7 @@ def play(episodes, is_render, is_testing, checkpoint_interval,
 
                 for i in range(env.n):
                     if done[i]:
-                        rewards[i] *= 100
+                        rewards[i] = -1000
 
                     memories[i].remember(states[i], actions[i],
                                          rewards[i], states_next[i], done[i])
@@ -83,7 +80,10 @@ def play(episodes, is_render, is_testing, checkpoint_interval,
                     else:
                         episode_losses[i] = -1
 
-                states = states_next
+            states = states_next
+            episode_rewards += rewards
+            collision_count += np.array(
+                simple_tag_utilities.count_agent_collisions(env))
 
             # reset states if done
             if any(done):
@@ -140,7 +140,17 @@ if __name__ == '__main__':
                         help="reduces exploration substantially")
     parser.add_argument('--random_seed', default=2, type=int)
     parser.add_argument('--memory_size', default=10000, type=int)
-    parser.add_argument('--batch_size', default=64, type=int)
+    parser.add_argument('--batch_size', default=128, type=int)
+    parser.add_argument('--ou_mus', nargs='+', type=float,
+                        help="OrnsteinUhlenbeckActionNoise mus for each action for each agent")
+    parser.add_argument('--ou_sigma', nargs='+', type=float,
+                        help="OrnsteinUhlenbeckActionNoise sigma for each agent")
+    parser.add_argument('--ou_theta', nargs='+', type=float,
+                        help="OrnsteinUhlenbeckActionNoise theta for each agent")
+    parser.add_argument('--ou_dt', nargs='+', type=float,
+                        help="OrnsteinUhlenbeckActionNoise dt for each agent")
+    parser.add_argument('--ou_x0', nargs='+', type=float,
+                        help="OrnsteinUhlenbeckActionNoise x0 for each agent")
 
     args = parser.parse_args()
 
@@ -149,6 +159,55 @@ if __name__ == '__main__':
 
     # init env
     env = make_env(args.env, args.benchmark)
+
+    # Extract ou initialization values
+    if args.ou_mus is not None:
+        if len(args.ou_mus) == sum([env.action_space[i].n for i in range(env.n)]):
+            ou_mus = []
+            prev_idx = 0
+            for space in env.action_space:
+                ou_mus.append(
+                    np.array(args.ou_mus[prev_idx:prev_idx + space.n]))
+                prev_idx = space.n
+            print("Using ou_mus: {}".format(ou_mus))
+        else:
+            raise ValueError(
+                "Must have enough ou_mus for all actions for all agents")
+    else:
+        ou_mus = [np.zeros(env.action_space[i].n) for i in range(env.n)]
+
+    if args.ou_sigma is not None:
+        if len(args.ou_sigma) == env.n:
+            ou_sigma = args.ou_sigma
+        else:
+            raise ValueError("Must have enough ou_sigma for all agents")
+    else:
+        ou_sigma = [0.3 for i in range(env.n)]
+
+    if args.ou_theta is not None:
+        if len(args.ou_theta) == env.n:
+            ou_theta = args.ou_theta
+        else:
+            raise ValueError("Must have enough ou_theta for all agents")
+    else:
+        ou_theta = [0.15 for i in range(env.n)]
+
+    if args.ou_dt is not None:
+        if len(args.ou_dt) == env.n:
+            ou_dt = args.ou_dt
+        else:
+            raise ValueError("Must have enough ou_dt for all agents")
+    else:
+        ou_dt = [1e-2 for i in range(env.n)]
+
+    if args.ou_x0 is not None:
+        if len(args.ou_x0) == env.n:
+            ou_x0 = args.ou_x0
+        else:
+            raise ValueError("Must have enough ou_x0 for all agents")
+    else:
+        ou_x0 = [None for i in range(env.n)]
+
     # if not os.path.exists(args.video_dir):
     #     os.makedirs(args.video_dir)
     # args.video_dir = os.path.join(
@@ -189,7 +248,11 @@ if __name__ == '__main__':
                               state, state_next, reward))
         actors[i].add_gradients(critics[i].action_gradients)
         actors_noise.append(OrnsteinUhlenbeckActionNoise(
-            mu=np.zeros(n_action)))
+            mu=ou_mus[i],
+            sigma=ou_sigma[i],
+            theta=ou_theta[i],
+            dt=ou_dt[i],
+            x0=ou_x0[i]))
         memories.append(Memory(args.memory_size))
 
     session.run(tf.global_variables_initializer())

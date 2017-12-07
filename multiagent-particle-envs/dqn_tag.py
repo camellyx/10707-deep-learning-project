@@ -57,9 +57,6 @@ def play(episodes, is_render, is_testing, checkpoint_interval,
 
             # step
             states_next, rewards, done, info = env.step(actions_onehot)
-            episode_rewards += rewards
-            collision_count += np.array(
-                simple_tag_utilities.count_agent_collisions(env))
 
             # learn
             if not args.testing:
@@ -69,7 +66,7 @@ def play(episodes, is_render, is_testing, checkpoint_interval,
 
                 for i in range(env.n):
                     if done[i]:
-                        rewards[i] *= 100
+                        rewards[i] = -1000
 
                     memories[i].remember(states[i], actions[i],
                                          rewards[i], states_next[i], done[i])
@@ -80,7 +77,10 @@ def play(episodes, is_render, is_testing, checkpoint_interval,
                     else:
                         episode_losses[i] = -1
 
-                states = states_next
+            states = states_next
+            episode_rewards += rewards
+            collision_count += np.array(
+                simple_tag_utilities.count_agent_collisions(env))
 
             # reset states if done
             if any(done):
@@ -129,7 +129,7 @@ if __name__ == '__main__':
                         help="reduces exploration substantially")
     parser.add_argument('--random_seed', default=2, type=int)
     parser.add_argument('--memory_size', default=10000, type=int)
-    parser.add_argument('--batch_size', default=64, type=int)
+    parser.add_argument('--batch_size', default=128, type=int)
     args = parser.parse_args()
 
     general_utilities.dump_dict_as_json(vars(args),
