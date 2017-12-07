@@ -144,34 +144,27 @@ if __name__ == '__main__':
     # init actors and critics
     session = tf.Session()
 
-    n_actions = []
-    state_sizes = []
-    states_placeholder = []
-    rewards_placeholder = []
-    states_next_placeholder = []
     actors = []
     critics = []
     actors_noise = []
     memories = []
     for i in range(env.n):
-        n_actions.append(env.action_space[i].n)
-        state_sizes.append(env.observation_space[i].shape[0])
-        states_placeholder.append(tf.placeholder(
-            tf.float32, shape=[None, state_sizes[i]]))
-        rewards_placeholder.append(tf.placeholder(tf.float32, [None, 1]))
-        states_next_placeholder.append(tf.placeholder(tf.float32,
-                                                      shape=[None, state_sizes[i]]))
-        actors.append(Actor('actor' + str(i), session, n_actions[i], 1,
-                            states_placeholder[i], states_next_placeholder[i]))
-        critics.append(Critic('critic' + str(i), session, n_actions[i],
+        n_action = env.action_space[i].n
+        state_size = env.observation_space[i].shape[0]
+        state = tf.placeholder(tf.float32, shape=[None, state_size])
+        reward = tf.placeholder(tf.float32, [None, 1])
+        state_next = tf.placeholder(tf.float32, shape=[None, state_size])
+        speed = 0.9 if env.agents[i].adversary else 1
+
+        actors.append(Actor('actor' + str(i), session, n_action, speed,
+                            state, state_next))
+        critics.append(Critic('critic' + str(i), session, n_action,
                               actors[i].eval_actions, actors[i].target_actions,
-                              state_sizes[i], states_placeholder[i],
-                              states_next_placeholder[i], rewards_placeholder[i]))
+                              state, state_next, reward))
         actors[i].add_gradients(critics[i].action_gradients)
         actors_noise.append(OrnsteinUhlenbeckActionNoise(
-            mu=np.zeros(n_actions[i])))
-        memories.append(
-            Memory(args.memory_size, env.n * state_sizes[i] + n_actions[i] + 2))
+            mu=np.zeros(n_action)))
+        memories.append(Memory(args.memory_size))
 
     session.run(tf.global_variables_initializer())
 

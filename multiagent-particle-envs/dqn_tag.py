@@ -38,9 +38,10 @@ def play(episodes, is_render, is_testing, checkpoint_interval, \
         actions_onehot = []
         for i in range(env.n):
             action = dqns[i].choose_action(states[i])
+            speed = 0.9 if env.agents[i].adversary else 1
 
             onehot_action = np.zeros(n_actions[i])
-            onehot_action[action] = 1 * speed
+            onehot_action[action] = speed
             actions_onehot.append(onehot_action)
             actions.append(action)
 
@@ -130,10 +131,7 @@ if __name__ == '__main__':
     # init DQNs
     n_actions = [env.action_space[i].n for i in range(env.n)]
     state_sizes = [env.observation_space[i].shape[0] for i in range(env.n)]
-
-    # Memory: state initial, state final, action, reward, done
-    memories = [Memory(args.memory_size, 2 * state_sizes[i] + 3)
-                for i in range(env.n)]
+    memories = [Memory(args.memory_size) for i in range(env.n)]
     dqns = [DQN(n_actions[i], state_sizes[i]) for i in range(env.n)]
 
     general_utilities.load_dqn_weights_if_exist(
