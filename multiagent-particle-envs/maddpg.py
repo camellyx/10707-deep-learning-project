@@ -7,7 +7,7 @@ import general_utilities
 class Actor:
 
     def __init__(self, scope, session, n_actions, action_bound,
-                 eval_states, target_states, learning_rate=0.0001, tau=0.01):
+                 eval_states, target_states, learning_rate=0.0001, tau=0.001):
         self.session = session
         self.n_actions = n_actions
         self.action_bound = action_bound
@@ -74,7 +74,7 @@ class Critic:
 
     def __init__(self, scope, session, n_actions, actors_eval_actions,
                  actors_target_actions, eval_states, target_states,
-                 rewards, learning_rate=0.001, gamma=0.9, tau=0.01):
+                 rewards, learning_rate=0.001, gamma=0.9, tau=0.001):
         self.session = session
         self.n_actions = n_actions
         self.actors_eval_actions = actors_eval_actions
