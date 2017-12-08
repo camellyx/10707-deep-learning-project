@@ -77,7 +77,6 @@ def play(episodes, is_render, is_testing, checkpoint_interval,
                         loss = critics[i].learn(s, a, r, sn)
                         actors[i].learn(s)
                         episode_losses[i] += loss
-                        # TODO: episode_losses[i] += history.history["loss"][0]
                     else:
                         episode_losses[i] = -1
 
@@ -280,6 +279,6 @@ if __name__ == '__main__':
     tf.summary.FileWriter(args.experiment_prefix +
                           args.weights_filename_prefix, session.graph)
     save_path = saver.save(session, os.path.join(
-        args.experiment_prefix + weights_filename_prefix, "models"), global_step=args.episodes)
+        args.experiment_prefix + args.weights_filename_prefix, "models"), global_step=args.episodes)
     print("saving model to {}".format(save_path))
-    statistics.dump(args.csv_filename_prefix + ".csv")
+    statistics.dump(args.experiment_prefix + args.csv_filename_prefix + ".csv")

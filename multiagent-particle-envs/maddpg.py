@@ -5,6 +5,7 @@ import general_utilities
 
 
 class Actor:
+
     def __init__(self, scope, session, n_actions, action_bound,
                  eval_states, target_states, learning_rate=0.0001, tau=0.01):
         self.session = session
@@ -70,21 +71,9 @@ class Actor:
         return self.session.run(self.eval_actions,
                                 feed_dict={self.eval_states: state[np.newaxis, :]})[0]
 
-    def load(self, name):
-        latest_ckpt = tf.train.latest_checkpoint(name)
-        if latest_ckpt:
-            print("Loading model from checkpoint {}".format(latest_ckpt))
-            self.saver.restore(self.session, latest_ckpt)
-
-    def save(self, name):
-        p = pathlib.Path(name)
-        if len(p.parts) > 1:
-            dump_dirs = pathlib.Path(*p.parts[:-1])
-            general_utilities.ensure_directory_exists(str(dump_dirs))
-        save_path = self.saver.save(self.session, name)
-
 
 class Critic:
+
     def __init__(self, scope, session, n_actions, actors_eval_actions,
                  actors_target_actions, eval_states, target_states,
                  rewards, learning_rate=0.001, gamma=0.9, tau=0.01):
@@ -160,19 +149,7 @@ class Critic:
         b = {i: d for i, d in zip(self.actors_eval_actions, actions)}
         c = {i: d for i, d in zip(self.target_states, states_next)}
 
-        self.session.run(self.optimize, feed_dict={**a, **b, **c,
-                                                   self.rewards: rewards})
+        loss, _ = self.session.run([self.loss, self.optimize], feed_dict={**a, **b, **c,
+                                                                          self.rewards: rewards})
         self.session.run(self.update_target)
-
-    def load(self, name):
-        latest_ckpt = tf.train.latest_checkpoint(name)
-        if latest_ckpt:
-            print("Loading model from checkpoint {}".format(latest_ckpt))
-            self.saver.restore(self.session, latest_ckpt)
-
-    def save(self, name):
-        p = pathlib.Path(name)
-        if len(p.parts) > 1:
-            dump_dirs = pathlib.Path(*p.parts[:-1])
-            general_utilities.ensure_directory_exists(str(dump_dirs))
-        save_path = self.saver.save(self.session, name)
+        return loss
