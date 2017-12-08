@@ -8,8 +8,9 @@ import os
 import pickle
 import code
 import random
+from functools import reduce
 
-from ddpg import Actor, Critic
+from maddpg import Actor, Critic
 from memory import Memory
 from ornstein_uhlenbeck import OrnsteinUhlenbeckActionNoise
 from make_env import make_env
@@ -68,14 +69,14 @@ def play(episodes, is_render, is_testing, checkpoint_interval,
                     if done[i]:
                         rewards[i] -= 50
 
-                    memories[i].remember(states[i], actions[i],
-                                         rewards[i], states_next[i], done[i])
+                    memories[i].remember(states, actions, rewards[i],
+                                         states_next, done[i])
 
                     if memories[i].pointer > batch_size * 10:
-                        s, a, r, sn, _ = memories[i].sample(batch)
+                        s, a, r, sn, _ = memories[i].sample(batch, env.n)
                         r = np.reshape(r, (batch_size, 1))
                         loss = critics[i].learn(s, a, r, sn)
-                        actors[i].learn(s)
+                        actors[i].learn(actors, s)
                         episode_losses[i] += loss
                     else:
                         episode_losses[i] = -1
@@ -131,9 +132,9 @@ if __name__ == '__main__':
     parser.add_argument('--benchmark', default=False, action="store_true")
     parser.add_argument('--experiment_prefix', default=".",
                         help="directory to store all experiment data")
-    parser.add_argument('--weights_filename_prefix', default='/save/tag-ddpg',
+    parser.add_argument('--weights_filename_prefix', default='/save/tag-maddpg',
                         help="where to store/load network weights")
-    parser.add_argument('--csv_filename_prefix', default='/save/statistics-ddpg',
+    parser.add_argument('--csv_filename_prefix', default='/save/statistics-maddpg',
                         help="where to store statistics")
     parser.add_argument('--checkpoint_frequency', default=500, type=int,
                         help="how often to checkpoint")
@@ -211,18 +212,6 @@ if __name__ == '__main__':
     else:
         ou_x0 = [None for i in range(env.n)]
 
-    # if not os.path.exists(args.video_dir):
-    #     os.makedirs(args.video_dir)
-    # args.video_dir = os.path.join(
-    #     args.video_dir, 'monitor-' + time.strftime("%y-%m-%d-%H-%M"))
-    # if not os.path.exists(args.video_dir):
-    #     os.makedirs(args.video_dir)
-    # env = MyMonitor(env, args.video_dir,
-    #                 # resume=True, write_upon_reset=True,
-    #                 video_callable=lambda episode: (
-    #                     episode + 1) % args.video_interval == 0,
-    #                 force=True)
-
     # set random seed
     env.seed(args.random_seed)
     random.seed(args.random_seed)
@@ -232,24 +221,23 @@ if __name__ == '__main__':
     # init actors and critics
     session = tf.Session()
 
+    n_actions = []
     actors = []
-    critics = []
     actors_noise = []
     memories = []
+    eval_actions = []
+    target_actions = []
+    state_placeholders = []
+    state_next_placeholders = []
     for i in range(env.n):
         n_action = env.action_space[i].n
         state_size = env.observation_space[i].shape[0]
         state = tf.placeholder(tf.float32, shape=[None, state_size])
-        reward = tf.placeholder(tf.float32, [None, 1])
         state_next = tf.placeholder(tf.float32, shape=[None, state_size])
         speed = 0.9 if env.agents[i].adversary else 1
 
         actors.append(Actor('actor' + str(i), session, n_action, speed,
                             state, state_next))
-        critics.append(Critic('critic' + str(i), session, n_action,
-                              actors[i].eval_actions, actors[i].target_actions,
-                              state, state_next, reward))
-        actors[i].add_gradients(critics[i].action_gradients)
         actors_noise.append(OrnsteinUhlenbeckActionNoise(
             mu=ou_mus[i],
             sigma=ou_sigma[i],
@@ -257,6 +245,22 @@ if __name__ == '__main__':
             dt=ou_dt[i],
             x0=ou_x0[i]))
         memories.append(Memory(args.memory_size))
+
+        n_actions.append(n_action)
+        eval_actions.append(actors[i].eval_actions)
+        target_actions.append(actors[i].target_actions)
+        state_placeholders.append(state)
+        state_next_placeholders.append(state_next)
+
+    critics = []
+    for i in range(env.n):
+        n_action = env.action_space[i].n
+        reward = tf.placeholder(tf.float32, [None, 1])
+
+        critics.append(Critic('critic' + str(i), session, n_actions,
+                              eval_actions, target_actions, state_placeholders,
+                              state_next_placeholders, reward))
+        actors[i].add_gradients(critics[i].action_gradients[i])
 
     session.run(tf.global_variables_initializer())
     saver = tf.train.Saver(max_to_keep=10000000)

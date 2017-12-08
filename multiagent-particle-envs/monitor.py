@@ -1,5 +1,4 @@
 import gym
-import numpy as np
 
 
 class MyMonitor(gym.wrappers.Monitor):
