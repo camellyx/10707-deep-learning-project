@@ -1,0 +1,30 @@
+% !TEX root=../proposal.tex
+
+\section{Problem Statement}
+\label{sec:problem}
+
+Many of the recent successes of deep reinforcement learning have been in
+single agent domains, where an agent's reward depends only on its own actions.
+However, several important and interesting problems in communication, robotics
+and gaming involve interactions between multiple agents. In multi-agent
+environments, agents should ideally learn to predict the actions of other
+agents while also determining their own actions. Unfortunately, traditional
+reinforcement learning approaches such as Q-learning and policy gradient
+methods struggle to learn in these environments as they have each agent learn
+an independently optimal function. More specifically, Q-learning is challenged by
+an inherent non-stationarity of the enviorments, while policy gradient suffers
+from a variance that grows as the number of agents increases. For our course
+project, we survey adaptations of deep actor-critic methods called DDPG~\cite{lillicrap2016continuous}
+and its follow up MADDPG~\cite{lowe2017multi} that consider action policies of 
+other agents and are able to successfully learn policies that require complex 
+multi-agent coordination. Unlike prior work, these methods work in both cooperative 
+and competitive scenarios for continuous control. 
+
+A totally different approach to training multi-agent systems is to abandon 
+traditional optimization methods and brute force the parameter space. Recently, 
+evolutionary strategies have been used with great success in learning a control 
+policy for robot motion. We investigate the behavior and performance of DDPG, MADDPG, 
+and evolutionary algorithms in the classic predator-prey game, where slower agents 
+chase faster adversaries. If time permits, we will also apply these technqiues 
+to explore covert communication between agents in adversarial environments. 
+ 
