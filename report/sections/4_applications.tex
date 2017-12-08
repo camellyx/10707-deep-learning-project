@@ -3,39 +3,37 @@
 \section{Environment and Applications}
 \label{sec:application}
 
-In this project, we use the OpenAI Gym environment, which generates virtually
-infinite amount of data for training and testing our neural network by
-simulating various multi-agent reinforcement learning settings.
+In this project, we use the OpenAI Gym framework~\cite{gym.openai16}, which
+generates virtually infinite amount of data for training and testing our
+neural network. This framework includes various gym environments that simulate
+various reinforcement learning settings. Each gym environment defines the
+\emph{state space} (i.e., all possible states of the environment) and the
+action space (i.e., all possible actions of the agent). Note that a gym
+environment is turn-based, i.e., the agent can only take one action per time
+step to influence the state at the next time step. In each time step, the
+environment computes the next state and the immediate reward for each agent,
+and decide if the episode is finished or not. These pieces of information
+(i.e., the immediate reward and the episode finished signal) are used by each
+agent to decide the best action in the next step. We refer the readers to
+Section~\ref{sec:background:problem} for a detailed explanation of a classical
+reinforcement learning problem setting.
 
-A simulated episodic environment takes in an action in each iteration. In
-multi-agent environment, this action is simply an ordered concatenation of
-every agents' actions. In each step, the environment computes the next
-observable state and the immediate reward for each agent, and decide if the
-episode is finished or not. These pieces of information are used by each agent
-to decide the best action in the next step.
+\subsection{The Predator-Pray Environment}
 
-We will focus on the following two tasks using the framework of ~\cite{lowe2017multi}, 
-where we will have agents trained with evolutionary techniques, DDPG and 
-MADDPG compete against one another in groups.
+We develop a modified version of the \emph{``predator-pray''} gym environment
+in the ``multi-agent particle'' environment suite developed by prior
+work~\cite{lowe2017multi, mordatch2017emergence}, and train our
+neural-network-based agents. In the original classic predator-prey game, $N$
+slower cooperating agents must chase the faster adversary around a randomly
+generated environment with $L$ large landmarks impeding the way. Each time the
+cooperative agents collide with an adversary, the agents are rewarded while
+the adversary is penalized. Agents observe the relative positions and
+velocities of the agents, and the positions of the landmarks. We introduce the
+state space, action space, the reward function, and our modifications to the
+environment.
 
-\begin{enumerate}
+\paragraph{State Space.} In predator-pray environment, the state space is a
+list of the observable state of each agent ($state[i]$).
 
-\item \textbf{Predator-prey.} In this variant of the classic predator-prey
-game, N slower cooperating agents must chase the faster adversary around a
-randomly generated environment with L large landmarks impeding the way. Each
-time the cooperative agents collide with an adversary, the agents are rewarded
-while the adversary is penalized. Agents observe the relative positions and
-velocities of the agents, and the positions of the landmarks.
-
-
-\item \textbf{Covert communication.} This is an adversarial communication
-environment, where a speaker agent (‘Alice’) must communicate a message to a
-listener agent (‘Bob’), who must reconstruct the message at the other end.
-However, an adversarial agent (‘Eve’) is also observing the channel, and wants
-to reconstruct the message -- Alice and Bob are penalized based on Eve’s
-reconstruction, and thus Alice must encode her message using a randomly
-generated key, known only to Alice and Bob.
-
-\end{enumerate}
 
 
