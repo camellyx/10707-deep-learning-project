@@ -30,8 +30,6 @@ class Actor:
             self.update_target = [tf.assign(t, (1 - tau) * t + tau * e)
                                   for t, e in zip(self.target_weights, self.eval_weights)]
 
-            self.saver = tf.train.Saver()
-
     def build_network(self, x, scope, trainable):
         with tf.variable_scope(scope):
             W = tf.random_normal_initializer(0.0, 0.1)
@@ -111,8 +109,6 @@ class Critic:
 
             self.update_target = [tf.assign(t, (1 - tau) * t + tau * e)
                                   for t, e in zip(self.target_weights, self.eval_weights)]
-
-            self.saver = tf.train.Saver()
 
     def build_network(self, x1, x2, scope, trainable):
         with tf.variable_scope(scope):

@@ -30,8 +30,6 @@ class Actor:
             self.update_target = [tf.assign(t, (1 - tau) * t + tau * e)
                                   for t, e in zip(self.target_weights, self.eval_weights)]
 
-            self.saver = tf.train.Saver()
-
     def build_network(self, x, scope, trainable):
         with tf.variable_scope(scope):
             W = tf.random_normal_initializer(0.0, 0.1)
@@ -66,19 +64,6 @@ class Actor:
     def choose_action(self, state):
         return self.session.run(self.eval_actions,
                                 feed_dict={self.eval_states: state[np.newaxis, :]})[0]
-
-    def load(self, name):
-        latest_ckpt = tf.train.latest_checkpoint(name)
-        if latest_ckpt:
-            print("Loading model from checkpoint {}".format(latest_ckpt))
-            self.saver.restore(self.session, latest_ckpt)
-
-    def save(self, name):
-        p = pathlib.Path(name)
-        if len(p.parts) > 1:
-            dump_dirs = pathlib.Path(*p.parts[:-1])
-            general_utilities.ensure_directory_exists(str(dump_dirs))
-        save_path = self.saver.save(self.session, name)
 
 
 class Critic:
@@ -118,8 +103,6 @@ class Critic:
 
             self.update_target = [tf.assign(t, (1 - tau) * t + tau * e)
                                   for t, e in zip(self.target_weights, self.eval_weights)]
-
-            self.saver = tf.train.Saver()
 
     def build_network(self, x1, x2, scope, trainable):
         with tf.variable_scope(scope):
