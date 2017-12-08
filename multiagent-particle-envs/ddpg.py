@@ -148,16 +148,3 @@ class Critic:
                                                                           self.target_states: states_next})
         self.session.run(self.update_target)
         return loss
-
-    def load(self, name):
-        latest_ckpt = tf.train.latest_checkpoint(name)
-        if latest_ckpt:
-            print("Loading model from checkpoint {}".format(latest_ckpt))
-            self.saver.restore(self.session, latest_ckpt)
-
-    def save(self, name):
-        p = pathlib.Path(name)
-        if len(p.parts) > 1:
-            dump_dirs = pathlib.Path(*p.parts[:-1])
-            general_utilities.ensure_directory_exists(str(dump_dirs))
-        save_path = self.saver.save(self.session, name)

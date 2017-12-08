@@ -74,8 +74,9 @@ def play(episodes, is_render, is_testing, checkpoint_interval,
                     if memories[i].pointer > batch_size * 10:
                         s, a, r, sn, _ = memories[i].sample(batch)
                         r = np.reshape(r, (batch_size, 1))
-                        critics[i].learn(s, a, r, sn)
+                        loss = critics[i].learn(s, a, r, sn)
                         actors[i].learn(s)
+                        episode_losses[i] += loss
                         # TODO: episode_losses[i] += history.history["loss"][0]
                     else:
                         episode_losses[i] = -1
@@ -108,10 +109,9 @@ def play(episodes, is_render, is_testing, checkpoint_interval,
         if episode % checkpoint_interval == 0:
             statistics.dump("{}_{}.csv".format(
                 csv_filename_prefix, episode))
-            general_utilities.save_dqn_weights(critics,
-                                               weights_filename_prefix + "critic_")
-            general_utilities.save_dqn_weights(actors,
-                                               weights_filename_prefix + "actor_")
+            save_path = saver.save(session, os.path.join(
+                weights_filename_prefix, "models"), global_step=episode)
+            print("saving model to {}".format(save_path))
             if episode >= checkpoint_interval:
                 os.remove("{}_{}.csv".format(csv_filename_prefix,
                                              episode - checkpoint_interval))
@@ -138,6 +138,8 @@ if __name__ == '__main__':
                         help="how often to checkpoint")
     parser.add_argument('--testing', default=False, action="store_true",
                         help="reduces exploration substantially")
+    parser.add_argument('--load_weights_from_file', default='',
+                        help="where to load network weights")
     parser.add_argument('--random_seed', default=2, type=int)
     parser.add_argument('--memory_size', default=10000, type=int)
     parser.add_argument('--batch_size', default=128, type=int)
@@ -256,11 +258,12 @@ if __name__ == '__main__':
         memories.append(Memory(args.memory_size))
 
     session.run(tf.global_variables_initializer())
+    saver = tf.train.Saver(max_to_keep=10000000)
 
-    general_utilities.load_dqn_weights_if_exist(
-        actors, args.experiment_prefix + args.weights_filename_prefix + "actor_", ".h5.index")
-    general_utilities.load_dqn_weights_if_exist(
-        critics, args.experiment_prefix + args.weights_filename_prefix + "critic_", ".h5.index")
+    if args.load_weights_from_file != "":
+        saver.restore(session, args.load_weights_from_file)
+        print("restoring from checkpoint {}".format(
+            args.load_weights_from_file))
 
     start_time = time.time()
 
@@ -276,8 +279,7 @@ if __name__ == '__main__':
                                                       time.time() - start_time))
     tf.summary.FileWriter(args.experiment_prefix +
                           args.weights_filename_prefix, session.graph)
-    general_utilities.save_dqn_weights(critics,
-                                       args.experiment_prefix + args.weights_filename_prefix + "critic_")
-    general_utilities.save_dqn_weights(actors,
-                                       args.experiment_prefix + args.weights_filename_prefix + "actor_")
+    save_path = saver.save(session, os.path.join(
+        args.experiment_prefix + weights_filename_prefix, "models"), global_step=args.episodes)
+    print("saving model to {}".format(save_path))
     statistics.dump(args.csv_filename_prefix + ".csv")
