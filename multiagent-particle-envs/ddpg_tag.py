@@ -66,7 +66,7 @@ def play(episodes, is_render, is_testing, checkpoint_interval,
 
                 for i in range(env.n):
                     if done[i]:
-                        rewards[i] = -1000
+                        rewards[i] -= 50
 
                     memories[i].remember(states[i], actions[i],
                                          rewards[i], states_next[i], done[i])

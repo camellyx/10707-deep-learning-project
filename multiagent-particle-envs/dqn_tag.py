@@ -66,7 +66,7 @@ def play(episodes, is_render, is_testing, checkpoint_interval,
 
                 for i in range(env.n):
                     if done[i]:
-                        rewards[i] = -1000
+                        rewards[i] -= 50
 
                     memories[i].remember(states[i], actions[i],
                                          rewards[i], states_next[i], done[i])
@@ -157,7 +157,8 @@ if __name__ == '__main__':
     n_actions = [env.action_space[i].n for i in range(env.n)]
     state_sizes = [env.observation_space[i].shape[0] for i in range(env.n)]
     memories = [Memory(args.memory_size) for i in range(env.n)]
-    dqns = [DQN(n_actions[i], state_sizes[i], eps_greedy=epsilon_greedy[i]) for i in range(env.n)]
+    dqns = [DQN(n_actions[i], state_sizes[i], eps_greedy=epsilon_greedy[i])
+            for i in range(env.n)]
 
     general_utilities.load_dqn_weights_if_exist(
         dqns, args.experiment_prefix + args.weights_filename_prefix)
