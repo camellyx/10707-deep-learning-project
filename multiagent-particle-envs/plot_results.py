@@ -150,7 +150,7 @@ if __name__ == "__main__":
         formatter = FuncFormatter(to_percent)
         plt.gca().yaxis.set_major_formatter(formatter)
     else:
-        plt.ylabel("loss/error")
+        plt.ylabel("reward")
     #plt.title("NN results")
     if args.output_filename:
         plt.savefig(args.output_filename)
