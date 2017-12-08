@@ -130,13 +130,22 @@ if __name__ == '__main__':
     parser.add_argument('--random_seed', default=2, type=int)
     parser.add_argument('--memory_size', default=10000, type=int)
     parser.add_argument('--batch_size', default=128, type=int)
+    parser.add_argument('--epsilon_greedy', nargs='+', type=float,
+                        help="Epsilon greedy parameter for each agent")
     args = parser.parse_args()
 
     general_utilities.dump_dict_as_json(vars(args),
                                         args.experiment_prefix + "/save/run_parameters.json")
-
     # init env
     env = make_env(args.env, args.benchmark)
+
+    if args.epsilon_greedy is not None:
+        if len(args.epsilon_greedy) == env.n:
+            epsilon_greedy = args.epsilon_greedy
+        else:
+            raise ValueError("Must have enough epsilon_greedy for all agents")
+    else:
+        epsilon_greedy = [0.5 for i in range(env.n)]
 
     # set random seed
     env.seed(args.random_seed)
@@ -148,7 +157,7 @@ if __name__ == '__main__':
     n_actions = [env.action_space[i].n for i in range(env.n)]
     state_sizes = [env.observation_space[i].shape[0] for i in range(env.n)]
     memories = [Memory(args.memory_size) for i in range(env.n)]
-    dqns = [DQN(n_actions[i], state_sizes[i]) for i in range(env.n)]
+    dqns = [DQN(n_actions[i], state_sizes[i], eps_greedy=epsilon_greedy[i]) for i in range(env.n)]
 
     general_utilities.load_dqn_weights_if_exist(
         dqns, args.experiment_prefix + args.weights_filename_prefix)
