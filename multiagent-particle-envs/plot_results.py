@@ -51,15 +51,15 @@ if __name__ == "__main__":
                         help="Rolling average size")
     parser.add_argument("--loss",
                         action="store_true")
-    parser.add_argument("--reward",\
+    parser.add_argument("--reward",
                         action="store_true")
-    parser.add_argument("--collisions",\
+    parser.add_argument("--collisions",
                         action="store_true")
-    parser.add_argument("--cum_reward",\
+    parser.add_argument("--cum_reward",
                         action="store_true")
-    parser.add_argument("--steps", \
+    parser.add_argument("--steps",
                         action="store_true")
-    parser.add_argument("--error",\
+    parser.add_argument("--error",
                         action="store_true")
     parser.add_argument("--perplexity",
                         action="store_true")
@@ -82,7 +82,8 @@ if __name__ == "__main__":
         if args.cum_reward:
             selected.extend([k for k in df.keys() if "cum_reward" in k])
         if args.collisions:
-            selected.extend([k for k in df.keys() if "collisions" in k])
+            selected.extend(
+                [k for k in df.keys() if "collisions" in k and k != "collisions_2"])
         if args.steps:
             selected.extend([k for k in df.keys() if "steps" in k])
         if args.error:
@@ -106,7 +107,7 @@ if __name__ == "__main__":
     if args.rolling:
         window_size = args.rolling
         selected_df.rolling(window_size).mean().plot(
-            color="r", style="--", ax=ax, legend=0)
+            color="k", style="--", ax=ax, legend=0)
     if args.min:
         idxs = selected_df.idxmin()
         for k in selected_df:
@@ -141,7 +142,7 @@ if __name__ == "__main__":
                 print("Optimized train loss {}".format(y_train_loss))
                 print("Optimized train error {}".format(y_train_error))
             ax.scatter(x, y, s=40, facecolors="none", edgecolors="r")
-    plt.xlabel("epochs")
+    plt.xlabel("episodes")
     if args.loss and not args.error:
         plt.ylabel("loss")
     elif args.error and not args.loss:

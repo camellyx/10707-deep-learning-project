@@ -17,11 +17,6 @@ from make_env import make_env
 import general_utilities
 import simple_tag_utilities
 
-# TODO:
-# save weights
-# record loss
-# OpenAI record video
-
 
 def play(episodes, is_render, is_testing, checkpoint_interval,
          weights_filename_prefix, csv_filename_prefix, batch_size):
