@@ -20,20 +20,54 @@ reinforcement learning problem setting.
 
 \subsection{The Predator-Pray Environment}
 
-We develop a modified version of the \emph{``predator-pray''} gym environment
+We develop a modified version of the \emph{``predator-pray''} scenario
 in the ``multi-agent particle'' environment suite developed by prior
 work~\cite{lowe2017multi, mordatch2017emergence}, and train our
 neural-network-based agents. In the original classic predator-prey game, $N$
-slower cooperating agents must chase the faster adversary around a randomly
+slower \emph{cooperating agents} must chase the faster \emph{adversary}
+around a randomly
 generated environment with $L$ large landmarks impeding the way. Each time the
-cooperative agents collide with an adversary, the agents are rewarded while
-the adversary is penalized. Agents observe the relative positions and
-velocities of the agents, and the positions of the landmarks. We introduce the
-state space, action space, the reward function, and our modifications to the
-environment.
+cooperative agents collide with an adversary, the agents are rewarded
+while the adversary is penalized. Agents observe the relative positions and
+velocities of the adversary, and the positions of the landmarks. We introduce
+the state space, action space, the reward function, and our modifications to
+the scenario.
 
-\paragraph{State Space.} In predator-pray environment, the state space is a
-list of the observable state of each agent ($state[i]$).
+\paragraph{State Space.} In the predator-pray scenario, each agent can only
+observe its own state (i.e., $state[i]$). At each step, the environment
+returns these states concatenated into a list, which is then distributed to
+each individual agent accordingly. The $state[i]$ of each agent contains 
+(1)~the velocity and the location of itself in the x- and y-coordinate,
+(2)~the relative x- and y-coordinate of two landmarks,
+(3)~the relative x- and y-coordinate of all other agents, and
+(4)~the x- and y-directional velocity of of the escaping adversary.
 
+\paragraph{Action Space.} At each step, each agent can take an action (i.e.,
+$action[i]$) to move itself. Similar to the sate, all agents' actions are
+concatenated into a list and send to the environment. The $action[i]$ of each
+agent contains a no-action signal, and the movements towards four directions 
+(i.e., right, left, down, or up). In the discrete action space used for DQN,
+the action is simply an one-hot encoding of the five possible actions, where
+each action has a fixed amplitude. In continuous action space used for DDPG
+and MADDPG, the environment computes the amplitude of movement along the
+x-axis (i.e., $right - left$) and the y-axis (i.e., $up - down$).
 
+\paragraph{Reward Function.} In the original environment, all agents receive
+a fixed positive reward if any agent has collided into the adversary. If such
+collision happens, the same amount of negative reward is taken out of the
+adversary. In order to keep the game visible on the screen and to reduce the
+state space, the adversary also receives negative reward when it goes out of
+the computer screen.
+
+\paragraph{Our Modifications.} First, we modify the reward function to make
+the scenario more interesting. In addition to the reward function in the
+original version, we added positive reward to the adversary for how far it
+is to the agents, measured in l2 distance. Similarly, a negative reward is add
+to the agent for how far it is to the adversary.
+Second, we modify the original predator-pray
+scenario to test different number of agents and adversaries. We included
+results for (1)~1 agent vs. 1 adversary, (2)~1 agent vs. 2 adversaries, and 
+(3)~2 agents vs. 1 adversary. Third, we made the scenario into an episodic
+game. The episode never ends in the original version. The episode now ends
+when any agent or adversary goes out of the screen.
 
