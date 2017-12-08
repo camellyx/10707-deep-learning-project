@@ -108,6 +108,8 @@ def play(episodes, is_render, is_testing, checkpoint_interval,
         if episode % checkpoint_interval == 0:
             statistics.dump("{}_{}.csv".format(
                 csv_filename_prefix, episode))
+            if not os.path.exists(weights_filename_prefix):
+                os.makedirs(weights_filename_prefix)
             save_path = saver.save(session, os.path.join(
                 weights_filename_prefix, "models"), global_step=episode)
             print("saving model to {}".format(save_path))
