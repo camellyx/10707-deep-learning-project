@@ -3,17 +3,5 @@
 \section{Problem Statement}
 \label{sec:problem}
 
-Many of the recent successes of deep reinforcement learning have been in
-single agent domains with discrete low dimensional action spaces. However, 
-several important and interesting problems in communication, robotics, control
-and gaming have continuous high dimensional action spaces that involve interactions
-between multiple agents. Naively discretizing action spaces has many limitations,
-most notably the curse of dimensionality. On the other hand, single agent techniques
-struggle in multiagent environments as they do not take the actions of other agents
-into account while modeling an agent's return estimates and actions. In this project
-report, we apply Deep Q Network (DQN)~\cite{mnih2016dqn}, Deep Deterministic Policy Gradient (DDPG)~\cite{lillicrap2016continuous} and Multi Agent Deep Deterministic Policy Gradient (MADDPG)~\cite{lowe2017multi} to continuous multi-agent
-domains with both competitive and cooperative scenarios. In particular, we test the 
-effectiveness of these methods in the classic predator-prey game, where slower agents 
-chase faster adversaries. \footnote{Videos and code for this project can be found
-in our repository: \url{https://github.com/camellyx/10707-deep-learning-project}.}
+Many of the recent successes of deep reinforcement learning have been in single agent domains with discrete low dimensional action spaces. However, several important and interesting problems in communication, robotics, control and gaming have continuous high dimensional action spaces that involve interactions between multiple agents. Naively discretizing action spaces has many limitations, most notably the curse of dimensionality. On the other hand, single agent techniques struggle in non stationary multiagent environments as they do not take the actions of other agents into account while modeling an agent's actions and estimate of futures return. In this project report, we apply Deep Q Network (DQN)~\cite{mnih2016dqn}, Deep Deterministic Policy Gradient (DDPG)~\cite{lillicrap2016continuous} and Multi Agent Deep Deterministic Policy Gradient (MADDPG)~\cite{lowe2017multi} to continuous multi-agent domains with both competitive and cooperative scenarios. In particular, we test the effectiveness of these methods in the classic predator-prey game, where slower agents chase faster adversaries.\footnote{Videos and code for this project can be found in our repository: \url{https://github.com/camellyx/10707-deep-learning-project}.}
  

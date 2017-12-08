@@ -3,144 +3,56 @@
 \section{Background and Related Work}
 \label{sec:background}
 
-\subsection{Multi-Agent Reinforcement Learning Problem Setting}
-\label{sec:background:problem}
+\subsection{Continuous and High Dimensional Action Spaces}
 
-In traditional single-agent reinforcement learning, the problem is set up as a
-\emph{Markov Decision Process} (MDP). In a MDP problem setting, the agent can observe
-a finite set of states $S$, take a finite set of actions $A$, has a state
-transition function $T(s'|s,a) = P(S_{t+1}=s'|S_t=s, A_t=a)$, has a reward
-function $r(s,a) = E[R_{t+1}|S_t=s, A_t=a]$, and a discount factor $\gamma$.
-The state is fully observable to the agent, and the agent can decide a policy
-$\pi(a|s) = P(A_t=a | S_t=s)$ for its next action based on the current state
-$s$.
+Many tasks, and in particular those related to physical control, have continuous (real valued) and high dimensional action spaces. A straightforward approach to extending reinforcement learning methods designed for discrete action spaces (e.g. Q learning) to continuous domains is to simply discretize the action space. However, since tasks requiring fine control of actions require a correspondingly finer grained discretization, this leads to an explosion in the number of discrete actions. Large action spaces are difficult to explore efficiently and can make training intractable with traditional methods. In this project, we evaluate the performace of algorithms designed to work with discrete (DQN) as well as continuous actions spaces (DDPG, MADDPG). 
 
-There are two ways for the agent to decide a good policy that maximizes the
-return (i.e., discounted reward) $G_t = \sum_{k=0}^\infty \gamma^k R_{t+k+1}$.
-First, the agent can estimate the \emph{state-value function} of possible policies
-$v_\pi(s) = E_\pi[G_t|S_t=s]$. Secondly, the agent can alternatively
-estimate the \emph{action-value function} of possible policies
-$q_\pi(s,a) = E_\pi[G_t|S_t=s, A_t=a]$. These functions essentially estimates
-the expected return of a certain policy. To choose the best policy, the agent
-estimates either of these value functions for a range of possible policies and
-pick the one that has the highest value (i.e., expected return).
+\subsection{Multi-Agent Setting}
 
-In multi-agent reinforcement learning, there are multiple agents, which leads
-to several differences: (1)~each agent observes potentially different subsets
-of states $O_1,\ldots,O_N$, which depend on the overall state, (2)~each agent
-takes different actions $A_1,\ldots,A_N$, (3)~the state transition function
-depends on the actions of all agents, (4)~each agent may have different goals
-and thus have its own reward functions.
+Traditional single agent reinforcement learning algorithms typically formulate their environment as a Markov Decision Process (MDP). The multi-agent extension of MDPs with $N$ agents is defined by a set of states $S$ that describe the possible configurations of all agents, a set of actions $A_1, ..., A_N$ and a set of observations $O_1, ..., O_N$. To choose actions, each agent $i$ uses a stochatic policy $\pi_{\theta_i}: O_i \times A_i \rightarrow [0, 1]$ which produces the next state according to the transition function $T: S \times A_1 \times ... \times A_N$. Each agent receives a reward $r_i: S \times A_i \rightarrow \mathbb{R}$ which is a function of the state and the agent's action. Each agent also receives an (potentially partial) observation of the enviorment. The aim of each agent $i$ is to maximize its own total expected return $R_i = \sum_{t=0}^{T} \gamma^{t}r_i^{t}$, where $\gamma$ is the discount factor and $T$ is the reward.
 
+\subsection{Q-Learning and Deep Q Network (DQN)}
 
-\subsection{Q-Learning and Deep Q-Learning}
-
-Q-Learning and Deep Q-Learning (DQN) are popular techniques for single-agent
-reinforcement learning, and can also be applied to solve multi-agent
-reinforcement learning problems. Q-Learning uses a table to estimate the
-optimal action-value function defined by Bellman equation. The table entries
-are updated using stochastic gradient descent that minimizes the objective
-function, i.e., the mean squared error (MSE) between the true action-value
-function and the approximate Q-function.
+Q-Learning is a popular method for reinforcement learning that makes use of an action value function $Q^{\pi}(s, a) = \mathbb{E}[R | s^t = s, a^t = a]$. Many algorithms use the the Bellman equation $Q^{\pi}(s, a) = \mathbb{E}_{s'}[r(s, a) + \gamma \mathbb{E}_{a' \sim \pi}[Q^{\pi}(s', a')]]$ to recursively rewrite and estimate this Q function. A DQN successfully learns the action value function $Q^*$ corresponding to the optimal policy by minimizing the loss:
 \begin{equation}
-J(w) = E_\pi[(q_\pi(S,A) - \hat q(S,A,w))^2]
-\end{equation}
-	
-% The values for each table entry can be updated using
-% dynamic programming, monte carlo methods, or temporal difference (TD) methods.
-% \begin{align*}
-% Q(S_t, A_t) \leftarrow Q(S_t, A_t) +
-% 	\alpha [R_{t+1} + \gamma \max_\alpha Q(S_{t+1}, a) - Q(S_t, A_t)]
-% \end{align*}
-
-However, as the problem becomes complex (i.e., larger state and action
-spaces), the table in traditional Q-Learning becomes too large to update
-efficiently. Thus, DQN is developed to alleviate this problem by using a deep
-neural network to approximate the optimal action-value function. The key idea
-is to minimize the MSE between Q-network and Q-learning targets. The latter is
-approximated by sampling from a replay memory $D$ which contains previous
-state transitions. Each sample is used to update the Q-network parameters
-using stochastic gradient descent to minimize the MSE objective function
-mentioned above.
-\begin{equation}
-L(w) = E_{s,a,r,s'\sim D} [(r + \gamma \max_{a'} Q(s',a',w^-) - Q(s,a,w))^2]
+	L(\theta) = \mathbb{E}_{s,a,r,s'\sim D} [(r + \gamma \max_{a'} Q^{*}(s', a') - \bar{Q}^{*}(s, a | \theta))^2]
 \end{equation}
 
-Both Q-Learning and DQN can be applied to a multi-agent reinforcement learning
-by having each agent $i$ learn an independently optimal action-value function
-$Q_i$. However, there are two fundamental problems of these techniques that
-limit their capabilities. First, from any agent's point of view, since the
-environment is affected by actions taken by other agents unknown to that
-agent, the state transition function is no longer stationary, violating MDP
-constraint necessary for Q-Learning. Second, for DQN, the experience replay
-memory becomes inaccurate in approximating the state probabilities and state
-transitions for a similar reason.
+where $\bar{Q}$ is the target Q function. Compared to previous Q-Learning techniques, DQN uses deep function approximators in a stable and robust way due to two innovations - 1) the network is trained with a target Q network to give consistent targets during temporal difference backups 2) the network is trained off-policy with samples from a replay buffer $D$ to minimize correlations between samples.
 
+In the multi-agent setting, Q-Learning can be applied by having each agent $i$ learn an independently optimal function $Q_i$. However, there are two fundamental problems in using a DQN in a multi-agent enviroment. First, from any agent's point of view, since the environment is affected by actions taken by other agents unknown to that agent, the state transition function becomes non stationary, violating MDP criteria. Second, and for a similar reason, the experience replay memory becomes inaccurate in approximating the state transitions probabilities.
 
-\subsection{Policy Gradient}
+\subsection{Policy Gradient and Actor Critic Methods}
 
-Policy Gradient (PG) is another popular technique for single-agent
-reinforcement learning. Instead of approximating the state- or action-value
-function and derive the optimal policy from it (like in DQN), the key idea of
-PG is to directly parameterize the policy and learn the optimal policy
-$\pi_\theta (s,a)$. There are several advantages of Policy Gradient over
-value-based techniques: (1)~Policy Gradient often has better convergence
-properties, (2)~Policy Gradient is effective in high-dimensional or continuous
-action spaces, (3)~Policy Gradient can learn stochastic policies. The
-objective of Policy Gradient is:
+Another popular choice for single agent reinforcement learning algorithms are the Policy Gradient methods that directly adjust the parameters $\theta$ of the policy in order to maximize the objective $J(\theta) = \mathbb{E}_{s \sim p^{\pi}, a \sim \pi_{\theta}}[R]$ by taking steps in the direction of $\nabla_{\theta} J(\theta)$. There are several advantages of Policy Gradient over value-based techniques, most notably that they are effective in high-dimensional or continuous action spaces, and can learn stochastic policies. The policy gradient theorem gives the following expression
 \begin{equation}
-J(\theta) = E_{s\sim p^\pi, a\sim \pi} [\log \pi_\theta (a|s) Q^\pi(s,a)]
+	\nabla_{\theta} J(\theta) = \mathbb{E}_{s \sim p^{\pi}, a \sim \pi_{theta}} [\nabla_{\theta} log(\pi_{\theta}(a|s))Q^{\pi}(s, a)]
 \end{equation}
 
-Different policy gradient methods estimate $Q^\pi$ function differently, for
-example, commonly used Monte-Carlo Policy Gradient (REINFORCE) simply
-simulates the entire episode to obtain the overall return $G_t$. REINFORCE
-updates the policy function parameters using stochastic gradient descent.
+for $\nabla_{\theta} J(\theta)$, where $p^\pi$ is the state distribution. Most Policy Gradient methods differ in how they estimate $Q^{\pi}$. For example, REINFORCE is a popular Monte Carlo algorithm that simulates an entire episode to obtain an estimate of the return. Like other single-agent techniques, Policy Gradient methods can also be naively applied to multi-agent reinforcement learning problems. However, since the reward of each agent is highly dependent on other agents’ actions the variance of the gradient updates can be large, making it difficult to train and converge to an optimal policy.
+
+Actor-Critic methods mitigate the high variance problem of Policy Gradient techniques by combining it with value function based techniques. More specifically, Actor-Critic methods learn an approximation of the true action-value function $Q^{\pi} (s, a)$ by e.g., temporal difference learning or deep function approximators. $Q^{\pi} (s, a)$ is called the critic while the actor estimates the policy.
+
+\subsubsection{Deep Deterministic Policy Gradient (DDPG)}
+DDPG is an actor critic method that adapts the underyling success of Deep Q-learning to the continuous action domain. DDPG is based on the deterministic  policy gradient algorithm (DPG)~\cite{silver2014deterministic} which rewrites the gradient of the objective $J(\theta)$(Section 2.2) as:
 \begin{equation}
-\theta \leftarrow \theta
-	+ \alpha \gamma^t G_t \nabla_\theta \log \pi (A_t|S_t, \theta)
+	\nabla_{\theta}J(\theta) = \mathbb{E}_{s \sim D} [\nabla_{\theta}\mu_{\theta}(a|s)\nabla_{a} Q^{\mu}(s,a)|_{a = \mu_{\theta}(s)}]
 \end{equation}
 
-Like many other single-agent techniques, PG can also be applied to a
-multi-agent reinforcement learning problem. However, since the reward of each
-agent can be highly dependent on other agents' actions the variance in the
-policy gradient updates can be large, making it hard to converge to the
-optimal policy and difficult to converge during training.
+where $\mu_{\theta}: S \rightarrow A$ are deterministic policies. DDPG approximates both the policy $\mu$ and the critic $Q^{\mu}$ with deep neural networks, sampling trajectories from a replay buffer of experiences and using a target network as in DQN. Note that in the multi-agent setting, each agent is trained individually with DDPG, there is no combined optimization of the agents. However, the MADDPG algorithm, explained in the next section, naturally extends DDPG to the multi-agent setting during training, potentially resulting in much richer behavior between agents.
 
+\subsubsection{Multi Agent Deep Deterministic Policy Gradient (MADDPG)}
+MADDPG is a recently developed general-purpose multi-agent learning algorithm that is a simple extension of actor-critic policy gradient methods (specifically DDPG) where the critic is augmented with extra information about the policies of other 
+agents while the actor only has access to local information (i.e., its own observations). In this framework of centralized training with decentralized execution, agents don’t need to access the central critic at test time; they learn approximate models of other agents and effectively use them in their own policy learning procedure. Furthermore, since the centralized critic is
+learned independently for each agent, this approach can be used to model arbitrary reward structures between agents, including adversarial cases where the rewards are opposing.
 
-\subsection{Actor-Critic}
+More concretely, consider a game with N agents with policies parameterized by $\theta = {\theta_1, ..., \theta_N}$ and let $\mu = {\mu_1, ..., \mu_N}$ be the set of all agent policies. Then, the gradient of the expected return for agent $i$ with deterministic policies $\mu_{\theta_i}$ are given by:
+\begin{equation}
+\nabla_{\theta_i}J(\mu_i) = E_{x, a \sim D}[\nabla_{\theta_i}\mu_i(a_i|o_i)\nabla_{a_i}Q_i^{\mu}(x, a_1, ..., a_N)|_{a_i = \mu_i(o_i)}]
+\end{equation}
 
-Actor-Critic mitigates the high variance problem of Policy Gradient techniques
-by combining Policy Gradient with value function based techniques. Recall that
-the objective function of Policy Gradient contains an estimation of the
-action-value function $Q^w$. In REINFORCE, we simply use the overall return as
-an approximation: $Q^w = G_t$, which is essentially sampling from the
-distribution of action-values. In Actor-Critic method, we use a value-based
-method, such as dynamic programming, monte-carlo method, temporal difference,
-or DQN, to approximate $Q^w$, which reduces the variance of the policy
-gradient updates.
+Here the experience replay buffer $D$ contains the tuples $(x, x_0, a_1,..., a_N, r_1,..., r_N)$, recording experiences of all agents. $Q^{\mu}_i$ is the centralized action-value function that takes as input the actions of all agents, in addition to some state information x, and outputs the Q-value for agent i. Since each $Q^{\mu}_i$ is learned separately, agents can have 
+arbitrary reward structures, including conflicting rewards in a competitive setting.  
 
-
-\subsection{Evolutionary Algorithms}
-
-Evolutionary algorithms are randomized algorithm which search through a
-parameter space using operations such as random mutation and mixing of
-parameter combinations~\cite{man1996genetic}. These algorithms are
-embarrassingly parallel and can be applied to optimize reinforcement learning
-parameters. They have been used recently to scale a Mujoco Humanoid problem to
-1440 cores~\cite{salimans2017evolution}.
-
-The idea of using these algorithms for RL is that the simplicity of brute
-force trumps the complexity of other optimizers. Evolutionary algorithms have
-low communication overhead, no backpropagation calculations, high parallelism
-and an optimization algorithm free of stability issues, and they do this while
-being competitive in training progress~\cite{salimans2017evolution}. Some of
-the earliest RNNs were trained with random search, where they surpassed
-backpropagation methods, so this trend has been seen before in the ML
-community~\cite{hochreiter1997long}.
-
-\subsection{Related Work}
-
-% Summarize which prior work did what. Shall we reuse text from Section 3? And
-% we can talk about what's different in our implementation in Section 3.
+A primary motivation behind MADDPG is that, if the actions taken by all the agents are known, then the environment is stationary as the policies change. This is not the case if the actions of other agents are not explicity conditioned on, as done for most traditional reinforcement learning. Finally, note that the policies of other agents needs to be known to compute the loss. Knowing the observations and policies of other agents is not a particularly restrictive assumption; if the goal is to train agents to exhibit complex communicative behaviour in simulation, this information is often available to all agents. However, MADDPG also allows for this assumption to be relaxed by learning the policies of other agents from observations.
 
