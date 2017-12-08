@@ -83,7 +83,7 @@ if __name__ == "__main__":
             selected.extend([k for k in df.keys() if "cum_reward" in k])
         if args.collisions:
             selected.extend(
-                [k for k in df.keys() if "collisions" in k and k != "collisions_2"])
+                [k for k in df.keys() if "collisions" in k])
         if args.steps:
             selected.extend([k for k in df.keys() if "steps" in k])
         if args.error:
