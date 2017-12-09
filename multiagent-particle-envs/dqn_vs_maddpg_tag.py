@@ -9,7 +9,7 @@ import pickle
 import code
 import random
 
-from maddpg import Actor, Critic
+import maddpg
 from dqn import DQN
 from memory import Memory
 from ornstein_uhlenbeck import OrnsteinUhlenbeckActionNoise
@@ -175,6 +175,8 @@ if __name__ == '__main__':
                         help="OrnsteinUhlenbeckActionNoise dt for each agent")
     parser.add_argument('--ou_x0', nargs='+', type=float,
                         help="OrnsteinUhlenbeckActionNoise x0 for each agent")
+    parser.add_argument('--load_weights_from_file', default='',
+                        help="where to load network weights")
     args = parser.parse_args()
 
     general_utilities.dump_dict_as_json(vars(args),
@@ -251,54 +253,62 @@ if __name__ == '__main__':
     session = tf.Session()
 
     # init DQNs
-    n_actions = [env.action_space[i].n for i in range(h)]
-    state_sizes = [env.observation_space[i].shape[0] for i in range(h)]
-    memories = [Memory(args.memory_size) for i in range(h)]
-    dqns = [DQN(n_actions[i], state_sizes[i], eps_greedy=epsilon_greedy[i])
+    dqn_n_actions = [env.action_space[i].n for i in range(h)]
+    dqn_state_sizes = [env.observation_space[i].shape[0] for i in range(h)]
+    dqn_memories = [Memory(args.memory_size) for i in range(h)]
+    dqns = [DQN(dqn_n_actions[i], dqn_state_sizes[i], eps_greedy=epsilon_greedy[i])
             for i in range(h)]
 
     general_utilities.load_dqn_weights_if_exist(
         dqns, args.experiment_prefix + args.weights_filename_prefix)
 
-    actors = [None for i in range(h)]
-    actors_noise = [None for i in range(h)]
-    eval_actions = [None for i in range(h)]
-    target_actions = [None for i in range(h)]
-    state_placeholders = [None for i in range(h)]
-    state_next_placeholders = [None for i in range(h)]
-    for i in range(h, env.n-h+1):
+    maddpg_n_actions = []
+    maddpg_actors = []
+    maddpg_actors_noise = []
+    maddpg_memories = []
+    maddpg_eval_actions = []
+    maddpg_target_actions = []
+    maddpg_state_placeholders = []
+    maddpg_state_next_placeholders = []
+    for i in range(h):
         n_action = env.action_space[i].n
         state_size = env.observation_space[i].shape[0]
         state = tf.placeholder(tf.float32, shape=[None, state_size])
         state_next = tf.placeholder(tf.float32, shape=[None, state_size])
         speed = 0.9 if env.agents[i].adversary else 1
 
-        actors.append(Actor('actor' + str(i), session, n_action, speed,
+        maddpg_actors.append(maddpg.Actor('actor' + str(i), session, n_action, speed,
                             state, state_next))
-        actors_noise.append(OrnsteinUhlenbeckActionNoise(
+        maddpg_actors_noise.append(OrnsteinUhlenbeckActionNoise(
             mu=ou_mus[i],
             sigma=ou_sigma[i],
             theta=ou_theta[i],
             dt=ou_dt[i],
             x0=ou_x0[i]))
-        memories.append(Memory(args.memory_size))
+        maddpg_memories.append(Memory(args.memory_size))
 
-        n_actions.append(n_action)
-        eval_actions.append(actors[i].eval_actions)
-        target_actions.append(actors[i].target_actions)
-        state_placeholders.append(state)
-        state_next_placeholders.append(state_next)
+        maddpg_n_actions.append(n_action)
+        maddpg_eval_actions.append(maddpg_actors[i].eval_actions)
+        maddpg_target_actions.append(maddpg_actors[i].target_actions)
+        maddpg_state_placeholders.append(state)
+        maddpg_state_next_placeholders.append(state_next)
 
-    critics = [None for i in range(h)]
-    for i in range(h, env.n-h+1):
+    maddpg_critics = []
+    for i in range(h):
         n_action = env.action_space[i].n
         reward = tf.placeholder(tf.float32, [None, 1])
 
-        critics.append(Critic('critic' + str(i), session, n_actions,
-                              eval_actions, target_actions, state_placeholders,
-                              state_next_placeholders, reward))
-        actors[i].add_gradients(critics[i].action_gradients[i])
+        maddpg_critics.append(maddpg.Critic('critic' + str(i), session, maddpg_n_actions,
+                              maddpg_eval_actions, maddpg_target_actions, maddpg_state_placeholders,
+                              maddpg_state_next_placeholders, reward))
+        maddpg_actors[i].add_gradients(maddpg_critics[i].action_gradients[i])
 
+
+    actors = [*[None for i in range(h)], *maddpg_actors]
+    critics = [*[None for i in range(h)], *maddpg_critics]
+    actors_noise = [*[None for i in range(h)], *maddpg_actors_noise]
+    memories = [*dqn_memories, *maddpg_memories]
+    n_actions = [*dqn_n_actions, *maddpg_n_actions]
     session.run(tf.global_variables_initializer())
     saver = tf.train.Saver(max_to_keep=10000000)
 
