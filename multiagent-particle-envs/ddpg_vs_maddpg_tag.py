@@ -293,7 +293,7 @@ if __name__ == '__main__':
     actors = [*maddpg_actors, *ddpg_actors]
     critics = [*maddpg_critics, *ddpg_critics]
     actors_noise = [*maddpg_actors_noise, *ddpg_actors_noise]
-    memories = [*maddpg_memories, *ddpg_memories] 
+    memories = [*maddpg_memories, *ddpg_memories]
     session.run(tf.global_variables_initializer())
     saver = tf.train.Saver(max_to_keep=10000000)
 
