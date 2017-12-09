@@ -1,10 +1,9 @@
 # 10707-deep-learning-project
 Deep Learning Course Project
 
-![alt text](results/dqn_1vs1/dqn_1vs1.gif "DQN 1 vs 1") 
-![alt text](results/dqn_1vs2/dqn_1vs2.gif "DQN 1 vs 2") 
-![alt text](results/dqn_2vs1/dqn_2vs1.gif "DQN 2 vs 1")
-| http://videoblocks.com | http://audioblocks.com | http://graphicstock.com |
+![alt text](results/dqn_1vs1/dqn_1vs1.gif "DQN 1 vs 1" =250x250) 
+![alt text](results/dqn_1vs2/dqn_1vs2.gif "DQN 1 vs 2" =250x250) 
+![alt text](results/dqn_2vs1/dqn_2vs1.gif "DQN 2 vs 1" =250x250)
 
 This repository contains our implementation of DQN, DDPG, and MADDPG that works on a slightly modified version of the predator-pray environment. It also contains our results, including trained weights and training rewards and losses.
 
