@@ -26,7 +26,7 @@ In the multi-agent setting, Q-Learning can be applied by having each agent $i$ l
 
 Another popular choice for single agent reinforcement learning algorithms are the Policy Gradient methods that directly adjust the parameters $\theta$ of the policy in order to maximize the objective $J(\theta) = \mathbb{E}_{s \sim p^{\pi}, a \sim \pi_{\theta}}[R]$ by taking steps in the direction of $\nabla_{\theta} J(\theta)$. There are several advantages of Policy Gradient over value-based techniques, most notably that they are effective in high-dimensional or continuous action spaces, and can learn stochastic policies. The policy gradient theorem gives the following expression
 \begin{equation}
-	\nabla_{\theta} J(\theta) = \mathbb{E}_{s \sim p^{\pi}, a \sim \pi_{theta}} [\nabla_{\theta} log(\pi_{\theta}(a|s))Q^{\pi}(s, a)]
+	\nabla_{\theta} J(\theta) = \mathbb{E}_{s \sim p^{\pi}, a \sim \pi_{\theta}} [\nabla_{\theta} log(\pi_{\theta}(a|s))Q^{\pi}(s, a)]
 \end{equation}
 
 for $\nabla_{\theta} J(\theta)$, where $p^\pi$ is the state distribution. Most Policy Gradient methods differ in how they estimate $Q^{\pi}$. For example, REINFORCE is a popular Monte Carlo algorithm that simulates an entire episode to obtain an estimate of the return. Like other single-agent techniques, Policy Gradient methods can also be naively applied to multi-agent reinforcement learning problems. However, since the reward of each agent is highly dependent on other agents’ actions the variance of the gradient updates can be large, making it difficult to train and converge to an optimal policy.
