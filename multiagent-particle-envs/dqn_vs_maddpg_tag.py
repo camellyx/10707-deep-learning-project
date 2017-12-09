@@ -47,7 +47,6 @@ def play(episodes, is_render, is_testing, checkpoint_interval,
 
             # act
             actions = []
-            actions_onehot = []
             for i in range(env.n):
                 if i < h:
                     action = dqns[i].choose_action(states[i])
@@ -55,15 +54,14 @@ def play(episodes, is_render, is_testing, checkpoint_interval,
 
                     onehot_action = np.zeros(n_actions[i])
                     onehot_action[action] = speed
-                    actions_onehot.append(onehot_action)
-                    actions.append(action)
+                    actions.append(onehot_action)
                 else:
                     action = np.clip(
                         actors[i].choose_action(states[i]) + actors_noise[i](), -2, 2)
                     actions.append(action)
 
             # step
-            states_next, rewards, done, info = env.step(actions_onehot)
+            states_next, rewards, done, info = env.step(actions)
 
             # learn
             if not args.testing:
@@ -112,7 +110,8 @@ def play(episodes, is_render, is_testing, checkpoint_interval,
                 statistic.append(steps)
                 statistic.extend([episode_rewards[i] for i in range(env.n)])
                 statistic.extend([episode_losses[i] for i in range(env.n)])
-                statistic.extend([dqns[i].eps_greedy for i in range(env.n)])
+                statistic.extend([*[dqns[i].eps_greedy for i in range(h)],
+                                  *[-1 for i in range(h, env.n-h+1)]])
                 statistic.extend(collision_count.tolist())
                 statistics.add_statistics(statistic)
                 if episode % 25 == 0:
@@ -252,17 +251,19 @@ if __name__ == '__main__':
     # init actors and critics
     session = tf.Session()
 
+    # General agent data
+    n_actions = [env.action_space[i].n for i in range(env.n)]
+    state_sizes = [env.observation_space[i].shape[0] for i in range(env.n)]
+
     # init DQNs
-    dqn_n_actions = [env.action_space[i].n for i in range(h)]
-    dqn_state_sizes = [env.observation_space[i].shape[0] for i in range(h)]
     dqn_memories = [Memory(args.memory_size) for i in range(h)]
-    dqns = [DQN(dqn_n_actions[i], dqn_state_sizes[i], eps_greedy=epsilon_greedy[i])
+    dqns = [DQN(n_actions[i], state_sizes[i], eps_greedy=epsilon_greedy[i])
             for i in range(h)]
 
+    # load DQN
     general_utilities.load_dqn_weights_if_exist(
         dqns, args.experiment_prefix + args.weights_filename_prefix)
 
-    maddpg_n_actions = []
     maddpg_actors = []
     maddpg_actors_noise = []
     maddpg_memories = []
@@ -270,14 +271,14 @@ if __name__ == '__main__':
     maddpg_target_actions = []
     maddpg_state_placeholders = []
     maddpg_state_next_placeholders = []
-    for i in range(h):
-        n_action = env.action_space[i].n
-        state_size = env.observation_space[i].shape[0]
-        state = tf.placeholder(tf.float32, shape=[None, state_size])
-        state_next = tf.placeholder(tf.float32, shape=[None, state_size])
+    maddpg_critics = []
+    for i in range(h, env.n-h+1):
+        state = tf.placeholder(tf.float32, shape=[None, state_sizes[i]])
+        state_next = tf.placeholder(tf.float32, shape=[None, state_sizes[i]])
         speed = 0.9 if env.agents[i].adversary else 1
 
-        maddpg_actors.append(maddpg.Actor('actor' + str(i), session, n_action, speed,
+        # Actor
+        maddpg_actors.append(maddpg.Actor('actor' + str(i), session, n_actions[i], speed,
                             state, state_next))
         maddpg_actors_noise.append(OrnsteinUhlenbeckActionNoise(
             mu=ou_mus[i],
@@ -287,28 +288,23 @@ if __name__ == '__main__':
             x0=ou_x0[i]))
         maddpg_memories.append(Memory(args.memory_size))
 
-        maddpg_n_actions.append(n_action)
-        maddpg_eval_actions.append(maddpg_actors[i].eval_actions)
-        maddpg_target_actions.append(maddpg_actors[i].target_actions)
+        maddpg_eval_actions.append(maddpg_actors[h-i].eval_actions)
+        maddpg_target_actions.append(maddpg_actors[h-i].target_actions)
         maddpg_state_placeholders.append(state)
         maddpg_state_next_placeholders.append(state_next)
 
-    maddpg_critics = []
-    for i in range(h):
-        n_action = env.action_space[i].n
+        # Critic
         reward = tf.placeholder(tf.float32, [None, 1])
-
-        maddpg_critics.append(maddpg.Critic('critic' + str(i), session, maddpg_n_actions,
+        maddpg_critics.append(maddpg.Critic('critic' + str(i), session, n_actions,
                               maddpg_eval_actions, maddpg_target_actions, maddpg_state_placeholders,
                               maddpg_state_next_placeholders, reward))
-        maddpg_actors[i].add_gradients(maddpg_critics[i].action_gradients[i])
+        maddpg_actors[h-i].add_gradients(maddpg_critics[h-i].action_gradients[h-i])
 
 
     actors = [*[None for i in range(h)], *maddpg_actors]
     critics = [*[None for i in range(h)], *maddpg_critics]
     actors_noise = [*[None for i in range(h)], *maddpg_actors_noise]
     memories = [*dqn_memories, *maddpg_memories]
-    n_actions = [*dqn_n_actions, *maddpg_n_actions]
     session.run(tf.global_variables_initializer())
     saver = tf.train.Saver(max_to_keep=10000000)
 
