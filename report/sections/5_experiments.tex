@@ -3,12 +3,58 @@
 \section{Experiments}
 \label{sec:experiment}
 
+\subsection{One Agent vs. One Adversary Results}
+\label{sec:experiment:1vs1}
+
+Figure~\ref{fig:1vs1} plots our results for the predator-pray scenario with one
+agent and one adversary. The first row of this figure shows the number of steps
+per episode. The second row shows the cumulative reward per episode. The third
+row shows the number of collisions per episode. The fourth row shows the
+average loss per episode. The first column of Figure~\ref{fig:1vs1} shows the
+results for DQN model. The second column shows the results for DDPG model. The
+third column shows the results for MADDPG model. The x-axis of each figure is
+always number of training episodes. We next analyze these results in turn.
+
 \begin{figure}[htbp]
     \vspace*{-4cm}
     \hspace*{-3.5cm} 
     \includegraphics[width=21cm, height=20cm]{1vs1}
 	\caption{Plots for average reward, loss, steps and collisions per episode for 1 green vs 1 red agent}\label{Figure 2}
+  \label{fig:1vs1}
 \end{figure}
+
+In the first row of Figure~\ref{fig:1vs1}, the blue curve shows the number of
+steps for each episode, the black dotted curve shows the running average of
+steps per episode with a window size of 50. Note the different y-axis scales
+used in different figures. First, we observe that the MADDPG model achieves the
+highest peak steps per episode of the three models (i.e., highest steps of
+around 5000 achieved at around 55,000 episodes). Second, we find that DQN
+achieves the highest average steps per episode of around 300. This shows that
+DQN model based agent is has a more stable performance than the other two
+models. This is likely because both DDPG and MADDPG use policy gradient method,
+and uses a continuous action space rather than a discrete action space in DQN,
+both of which make DDPG and MADDPG harder to train and less stable.
+
+In the second row of Figure~\ref{fig:1vs1}, the blue curve shows the cumulative
+episode reward for the red agent, and the green curve shows that for the green
+adversary. Similar to the first row, we use black dotted curves to show the
+running average of the episode rewards of each agent. Note that this is a zero
+sum game because the rewards for collision and l2 distance should cancel out
+each other. Only the reward for getting close to the boundary do not cancel
+with each other. First, we observe that,
+for DQN agent, the average episode reward increases quickly within 300
+episodes and remain stable afterwards. Second, we find that the episode rewards
+are more structured (i.e., most of the time the green adversary receives -50
+rewards and the red agent receives near 50 rewards), whereas the rewards are
+more random for the DQN agent (i.e., only a few episodes have high or low
+rewards, mostly near zero rewards). Third, we find that the average reward for
+DQN agent is higher than DDPG and MADDPG agents. This is because the DQN agent
+is more stable and goes out of the screen less often.
+
+In the third row of Figure~\ref{fig:1vs1}, the blue and green curves are
+overlapped because the agent and the adversary have the same number of
+collisions.
+
 
 \begin{figure}[htbp]
     \vspace*{-4cm}
