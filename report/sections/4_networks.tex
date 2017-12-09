@@ -1,3 +1,15 @@
 % !TEX root=../report.tex
 
 \section{Network Architecture and Hyperparameters}
+
+Each agent in our continuous multi-agent predator prey environment is assigned a deep reinforcement learning model (DQN, DDPG or MADDPG) to determine its actions. The losses these models minimize and the gradients they use are described in Sections 2.3 and 2.4. Each DQN and DDPG model receives as input the current state, next state, action and reward of the agent it is modeling at every time step. On the other hand, MADDPG receives the current states, next states and actions of all agents in the environment, as its critic attempts to model its estimated future returns based on everyone's policies. 
+
+The DQN estimates its Q values using a neural network with 2 hiddens layers. Each layer containts 50 hidden units and relu activations. Since DDPG and MADDPG are Actor-Critic models, they both contain 2 networks each. In both cases, the Actor network contains 2 hiddens layers with 50 hidden units each and relu activations. The Critic network also contains 2 hidden layers, however, state and action inputs to this network are merged between the first and second hidden layers. The intermediate activation is a relu unit, while the output activation is a sigmoid (since the action values need to clamped between 0 and 1). 
+
+To stabilize learning, all networks are trained with a target Q network to give consistent targets during temporal difference backups. The parameters of the target network are updated using the following equation:
+\begin{equation}
+\theta_{i}' \leftarrow \tau\theta_{i} + (1 - \tau)\theta_{i}'
+\end{equation}
+
+where $\tau = 0.001$. Furthermore, during training, minibatches of size 128 are randomly sampled from replay buffers with the latest 10000 state, action, reward and next state tuples. All models are trained with the Adam Optimizer and with a learning rate of 0.001 for 6 hours each. Finally, the DQN is implemented in Keras, while DDPG and MADDPG are implemented in tensorflow. 
+
