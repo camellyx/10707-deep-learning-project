@@ -74,7 +74,7 @@ def play(episodes, is_render, is_testing, checkpoint_interval,
                         rewards[i] -= 50
 
                     if i < h:
-                        memories[i].remember(states[i], actions[i],
+                        memories[i].remember(states[i], np.argmax(actions[i]),
                                              rewards[i], states_next[i], done[i])
                     else:
                         memories[i].remember(states, actions, rewards[i],
@@ -82,7 +82,8 @@ def play(episodes, is_render, is_testing, checkpoint_interval,
 
                     if i < h:
                         if memories[i].pointer > batch_size * 10:
-                            history = dqns[i].learn(*memories[i].sample(batch))
+                            s, a, r, sn, done = memories[i].sample(batch)
+                            history = dqns[i].learn(s, a, r, sn, done)
                             episode_losses[i] += history.history["loss"][0]
                         else:
                             episode_losses[i] = -1
