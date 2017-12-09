@@ -10,5 +10,4 @@ Here is a summary of the folders:
 * `results/`: This folder contains the trained weights of our DQN, DDPG, and MADDPG models, and the statistics collected during training.
 
 Some Results:
-![alt text](results/dqn_1vs1/dqn_1vs1.gif "DQN 1 vs 1")
-![alt text](results/dqn_1vs1/collisions.png "DQN Collisions")
+| ![alt text](results/dqn_1vs1/dqn_1vs1.gif "DQN 1 vs 1") | ![alt text](results/dqn_1vs1/collisions.png "DQN Collisions") | ![alt text](results/dqn_1vs1/collisions.png "DQN Collisions") |
