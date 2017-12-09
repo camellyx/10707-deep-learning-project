@@ -141,11 +141,11 @@ class Critic:
         return values
 
     def learn(self, states, actions, rewards, states_next):
-        a = {i: d for i, d in zip(self.eval_states, states)}
-        b = {i: d for i, d in zip(self.actors_eval_actions, actions)}
-        c = {i: d for i, d in zip(self.target_states, states_next)}
+        s = {i: d for i, d in zip(self.eval_states, states)}
+        a = {i: d for i, d in zip(self.actors_eval_actions, actions)}
+        sn = {i: d for i, d in zip(self.target_states, states_next)}
 
-        loss, _ = self.session.run([self.loss, self.optimize], feed_dict={**a, **b, **c,
+        loss, _ = self.session.run([self.loss, self.optimize], feed_dict={**s, **a, **sn,
                                                                           self.rewards: rewards})
         self.session.run(self.update_target)
         return loss
