@@ -14,5 +14,3 @@ Here is a summary of the folders:
 * `multiagent-particle-envs/multiagent/scenarios/`: This folder contains the modified version of the predator-pray scenario (`simple_tag_guided_1v1.py`, `simple_tag_guided_1v2.py`, `simple_tag_guided_2v1.py`).
 * `report/`: This folder contains the latex files for our final report.
 * `results/`: This folder contains the trained weights of our DQN, DDPG, and MADDPG models, and the statistics collected during training.
-
-![alt text](results/dqn_1vs1/collisions.png "DQN Collisions")
