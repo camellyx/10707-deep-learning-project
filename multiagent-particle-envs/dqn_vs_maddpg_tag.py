@@ -89,7 +89,7 @@ def play(episodes, is_render, is_testing, checkpoint_interval,
                             episode_losses[i] = -1
                     else:
                         if memories[i].pointer > batch_size * 10:
-                            s, a, r, sn, _ = memories[i].sample(batch, env.n)
+                            s, a, r, sn, _ = memories[i].sample(batch)
                             r = np.reshape(r, (batch_size, 1))
                             loss = critics[i].learn(s, a, r, sn)
                             actors[i].learn(actors, s)
