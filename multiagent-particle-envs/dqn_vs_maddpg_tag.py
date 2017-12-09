@@ -246,6 +246,8 @@ if __name__ == '__main__':
     tf.set_random_seed(args.random_seed)
 
     # split agents
+    # agent_id < h is dqn
+    # agent_id >= h is maddpg
     h=1
 
     # init actors and critics
