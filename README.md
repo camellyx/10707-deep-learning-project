@@ -11,4 +11,6 @@ Here is a summary of the folders:
 
 Some Results:
 ![alt text](results/dqn_1vs1/dqn_1vs1.gif "DQN 1 vs 1")
+![alt text](results/dqn_1vs2/dqn_1vs2.gif "DQN 1 vs 2")
+![alt text](results/dqn_1vs2/dqn_2vs1.gif "DQN 2 vs 1")
 ![alt text](results/dqn_1vs1/collisions.png "DQN Collisions")
