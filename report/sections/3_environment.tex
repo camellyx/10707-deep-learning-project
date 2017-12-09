@@ -1,73 +1,14 @@
 % !TEX root=../report.tex
 
-\section{Environment}
-\label{sec:application}
+\section{Multi-Agent Environment}
 
-In this project, we use the OpenAI Gym framework~\cite{gym.openai16}, which
-generates virtually infinite amount of data for training and testing our
-neural network. This framework includes various gym environments that simulate
-various reinforcement learning settings. Each gym environment defines the
-\emph{state space} (i.e., all possible states of the environment) and the
-action space (i.e., all possible actions of the agent). Note that a gym
-environment is turn-based, i.e., the agent can only take one action per time
-step to influence the state at the next time step. In each time step, the
-environment computes the next state and the immediate reward for each agent,
-and decide if the episode is finished or not. These pieces of information
-(i.e., the immediate reward and the episode finished signal) are used by each
-agent to decide the best action in the next step. We refer the readers to
-Section~\ref{sec:background:problem} for a detailed explanation of a classical
-reinforcement learning problem setting.
+We use the multi-agent extension of the OpenAI Gym framework~\cite{gym.openai16} to setup our predator prey environment. We employ this framework as it is quickly becoming the standard in terms of environments to benchmark reinforcement learning algorithms in. In particular, the framework defines the state and action space for every agent based on the environment, which allows researchers to focus on making agents act intelligently. The framework is turn based, i.e., each agent performs an action (including no action) at every time step. The environment in turn provides each agent with a reward as well as an observation that describes the environment's state.
 
 \subsection{The Predator-Pray Environment}
 
-We develop a modified version of the \emph{``predator-pray''} scenario
-in the ``multi-agent particle'' environment suite developed by prior
-work~\cite{lowe2017multi, mordatch2017emergence}, and train our
-neural-network-based agents. In the original classic predator-prey game, $N$
-slower \emph{cooperating agents} must chase the faster \emph{adversary}
-around a randomly
-generated environment with $L$ large landmarks impeding the way. Each time the
-cooperative agents collide with an adversary, the agents are rewarded
-while the adversary is penalized. Agents observe the relative positions and
-velocities of the adversary, and the positions of the landmarks. We introduce
-the state space, action space, the reward function, and our modifications to
-the scenario.
+In the predator prey environment, slower (red) agents chase faster (green) adversaries. Multiple agents can exist on either team and the goal of each agent is to maximize its own reward in this mixed cooperative and competitive setting. The environment returns a list of states, one per agent, once each agent performs an action. An agent's state consists of the (1) agent's position and velocity, (2) the relative position of any landmarks, (3) the relative position of all other agents. The environment also returns a reward per agent. Agents receives -50 reward if they leaves the arena. If they do, the environment is reset, i.e., the next episode begins in a random configuration. Red agents receive a +100 reward for any green agent they intercept. Green agents, on the other hand, receive a -100 reward if they are intercepted by a red agent. To help training converge faster, we also enabled an l2 penalty. Red agents were given a negative reward proportional to their distance from green agents to prevent them from drifting aimlessly during the early stages of training. Green agents were given a positive reward proportional to their distance from red agents to similarly help them train faster.
 
-\paragraph{State Space.} In the predator-pray scenario, each agent can only
-observe its own state (i.e., $state[i]$). At each step, the environment
-returns these states concatenated into a list, which is then distributed to
-each individual agent accordingly. The $state[i]$ of each agent contains 
-(1)~the velocity and the location of itself in the x- and y-coordinate,
-(2)~the relative x- and y-coordinate of two landmarks,
-(3)~the relative x- and y-coordinate of all other agents, and
-(4)~the x- and y-directional velocity of of the escaping adversary.
+The action space consists of a list of actions, one per agent. Each agent's action is described by 5 numbers, which represent whether an agent should stay put or move up/down/left/right (this representation seems to contain redundancies, but it is specified by the environment and should not be modified by the algorithm designer). Each number is clamped between 0 and 1. 
 
-\paragraph{Action Space.} At each step, each agent can take an action (i.e.,
-$action[i]$) to move itself. Similar to the sate, all agents' actions are
-concatenated into a list and send to the environment. The $action[i]$ of each
-agent contains a no-action signal, and the movements towards four directions 
-(i.e., right, left, down, or up). In the discrete action space used for DQN,
-the action is simply an one-hot encoding of the five possible actions, where
-each action has a fixed amplitude. In continuous action space used for DDPG
-and MADDPG, the environment computes the amplitude of movement along the
-x-axis (i.e., $right - left$) and the y-axis (i.e., $up - down$).
-
-\paragraph{Reward Function.} In the original environment, all agents receive
-a fixed positive reward if any agent has collided into the adversary. If such
-collision happens, the same amount of negative reward is taken out of the
-adversary. In order to keep the game visible on the screen and to reduce the
-state space, the adversary also receives negative reward when it goes out of
-the computer screen.
-
-\paragraph{Our Modifications.} First, we modify the reward function to make
-the scenario more interesting. In addition to the reward function in the
-original version, we added positive reward to the adversary for how far it
-is to the agents, measured in l2 distance. Similarly, a negative reward is add
-to the agent for how far it is to the adversary.
-Second, we modify the original predator-pray
-scenario to test different number of agents and adversaries. We included
-results for (1)~1 agent vs. 1 adversary, (2)~1 agent vs. 2 adversaries, and 
-(3)~2 agents vs. 1 adversary. Third, we made the scenario into an episodic
-game. The episode never ends in the original version. The episode now ends
-when any agent or adversary goes out of the screen.
+For this project, we trained our reinforcement learning models on 3 scenarios in the predator prey setting - 1) 1 red agent vs 1 green agent, 2) 2 green agents vs 1 red agent and 3) 1 green agent vs 2 red agents. We did not use any landmarks, as none of the algorithms we employ (DQN, DDPG and MADDPG) explicitly model the landmarks in their optimization, i.e., there is no constraint/penalty that prevents agents from attempting to "move through" the landmarks. 
 
