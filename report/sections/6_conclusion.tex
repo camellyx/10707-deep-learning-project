@@ -1,0 +1,9 @@
+% !TEX root=../report.tex
+
+\section{Conclusion}
+\label{sec:conclusion}
+
+While the results from our DQN network are quite impressive (which was not expected), DDPG and MADDPG are larger networks (especially MADDPG which takes the states and actions of all agents into account) and most likely require more hyperparameter tuning and longer training times. They should not just be competitive, but better at formulating cooperative and competitive strategies than DQN agents in multi-agent scenarios.
+
+Furthermore, the high resolution of the OpenAI predator prey grid did not disibilitate the DQN networks' discrete and low dimensional action space. DQN agents were able to maneuver themselves out of tight situations (e.g. when a green agent was cornered by red agents) and make sharp (non vertical or horizontal) movements as perceived visually. However, continuous action policies are absolutely integral for physical control. It would be worthwhile applying our DQN, DDPG and MADDPG implementations to environments that highlight the weaknesses of discrete action spaces. 
+
