@@ -3,7 +3,9 @@
 \section{Experiments}
 \label{sec:experiment}
 
-\subsection{One Agent vs. One Adversary Results}
+For this project, we trained our reinforcement learning models on 3 scenarios in the predator prey setting - 1) 1 green agent vs 1 red agent, 2) 2 green agents vs 1 red agent and 3) 1 green agent vs 2 red agents. We did not use any landmarks, as none of the algorithms we employ explicitly model the landmarks in their optimization, i.e., there is no constraint/penalty that prevents agents from attempting to "move through" the landmarks. Each of the 3 scenarios described above were performed with DQN, DDPG and MADDPG agents separately. The number of steps, collisions, average reward and average loss per episode were collected for all experiments. TODO: DQN vs MADDPG  
+
+\subsection{1 Green Agent vs. 1 Red Agent}
 \label{sec:experiment:1vs1}
 
 Figure~\ref{fig:1vs1} plots our results for the predator-pray scenario with one
@@ -15,100 +17,95 @@ results for DQN model. The second column shows the results for DDPG model. The
 third column shows the results for MADDPG model. The x-axis of each figure is
 always number of training episodes. We next analyze these results in turn.
 
-
-\begin{figure}[h]
-  \centering
-
-  \begin{subfigure}[h]{\figscale\linewidth}
-    \includegraphics[trim=10 10 10 10,clip,width=\linewidth]
+\begin{figure}[t]
+  \vspace*{-2cm}
+  \begin{subfigure}[t]{\figscale\linewidth}
+    \hspace*{-2.75cm}
+    \includegraphics[width=1.5\textwidth]
     {../results/dqn_1vs1/steps.png}
-    \caption{Number of steps per episode over training episode for DQN.}
     \label{fig:dqn-1vs1-steps}
   \end{subfigure}
   ~
-  \begin{subfigure}[h]{\figscale\linewidth}
-    \includegraphics[trim=10 10 10 10,clip,width=\linewidth]
+  \begin{subfigure}[t]{\figscale\linewidth}
+    \hspace*{-1.4cm}
+    \includegraphics[width=1.5\textwidth]
     {../results/ddpg_1vs1/steps.png}
-    \caption{Number of steps per episode over training episode for DDPG.}
     \label{fig:ddpg-1vs1-steps}
   \end{subfigure}
   ~
-  \begin{subfigure}[h]{\figscale\linewidth}
-    \includegraphics[trim=10 10 10 10,clip,width=\linewidth]
+  \begin{subfigure}[t]{\figscale\linewidth}
+    \includegraphics[width=1.5\textwidth]
     {../results/maddpg_1vs1/steps.png}
-    \caption{Number of steps per episode over training episode for MADDPG.}
     \label{fig:maddpg-1vs1-steps}
   \end{subfigure}
 
-  \begin{subfigure}[h]{\figscale\linewidth}
-    \includegraphics[trim=10 10 10 10,clip,width=\linewidth]
+  \vspace{-0.5cm}
+  \begin{subfigure}[t]{\figscale\linewidth}
+    \hspace*{-2.75cm}
+    \includegraphics[width=1.5\textwidth]
     {../results/dqn_1vs1/reward.png}
-    \caption{Cumulative reward per episode over training episode for DQN.}
     \label{fig:dqn-1vs1-reward}
   \end{subfigure}
   ~
-  \begin{subfigure}[h]{\figscale\linewidth}
-    \includegraphics[trim=10 10 10 10,clip,width=\linewidth]
+  \begin{subfigure}[t]{\figscale\linewidth}
+    \hspace*{-1.4cm}
+    \includegraphics[width=1.5\textwidth]
     {../results/ddpg_1vs1/reward.png}
-    \caption{Cumulative reward per episode over training episode for DDPG.}
     \label{fig:ddpg-1vs1-reward}
   \end{subfigure}
   ~
-  \begin{subfigure}[h]{\figscale\linewidth}
-    \includegraphics[trim=10 10 10 10,clip,width=\linewidth]
+  \begin{subfigure}[t]{\figscale\linewidth}
+    \includegraphics[width=1.5\textwidth]
     {../results/maddpg_1vs1/reward.png}
-    \caption{Cumulative reward per episode over training episode for MADDPG.}
     \label{fig:maddpg-1vs1-reward}
   \end{subfigure}
 
-  \begin{subfigure}[h]{\figscale\linewidth}
-    \includegraphics[trim=10 10 10 10,clip,width=\linewidth]
+  \vspace{-0.5cm}
+  \begin{subfigure}[t]{\figscale\linewidth}
+    \hspace*{-2.75cm}
+    \includegraphics[width=1.5\textwidth]
     {../results/dqn_1vs1/collisions.png}
-    \caption{Number of collisions per episode over training episode for DQN.}
     \label{fig:dqn-1vs1-collisions}
   \end{subfigure}
   ~
-  \begin{subfigure}[h]{\figscale\linewidth}
-    \includegraphics[trim=10 10 10 10,clip,width=\linewidth]
+  \begin{subfigure}[t]{\figscale\linewidth}
+    \hspace*{-1.4cm}
+    \includegraphics[width=1.5\textwidth]
     {../results/ddpg_1vs1/collisions.png}
-    \caption{Number of collisions per episode over training episode for DDPG.}
     \label{fig:ddpg-1vs1-collisions}
   \end{subfigure}
   ~
-  \begin{subfigure}[h]{\figscale\linewidth}
-    \includegraphics[trim=10 10 10 10,clip,width=\linewidth]
+  \begin{subfigure}[t]{\figscale\linewidth}
+    \includegraphics[width=1.5\textwidth]
     {../results/maddpg_1vs1/collisions.png}
-    \caption{Number of collisions per episode over training episode for MADDPG.}
     \label{fig:maddpg-1vs1-collisions}
   \end{subfigure}
 
-  \begin{subfigure}[h]{\figscale\linewidth}
-    \includegraphics[trim=10 10 10 10,clip,width=\linewidth]
+  \vspace{-0.5cm}
+  \begin{subfigure}[t]{\figscale\linewidth}
+    \hspace*{-2.75cm}
+    \includegraphics[width=1.5\textwidth]
     {../results/dqn_1vs1/loss.png}
-    \caption{Average loss per episode over training episode for DQN.}
     \label{fig:dqn-1vs1-loss}
   \end{subfigure}
   ~
-  \begin{subfigure}[h]{\figscale\linewidth}
-    \includegraphics[trim=10 10 10 10,clip,width=\linewidth]
+  \begin{subfigure}[t]{\figscale\linewidth}
+    \hspace*{-1.4cm}
+    \includegraphics[width=1.5\textwidth]
     {../results/ddpg_1vs1/loss.png}
-    \caption{Average loss per episode over training episode for DDPG.}
     \label{fig:ddpg-1vs1-loss}
   \end{subfigure}
   ~
-  \begin{subfigure}[h]{\figscale\linewidth}
-    \includegraphics[trim=10 10 10 10,clip,width=\linewidth]
+  \begin{subfigure}[t]{\figscale\linewidth}
+    \includegraphics[width=1.5\textwidth]
     {../results/maddpg_1vs1/loss.png}
-    \caption{Average loss per episode over training episode for MADDPG.}
     \label{fig:maddpg-1vs1-loss}
   \end{subfigure}
 
-
-  \caption{Results for predator-pray with one agent vs. one adversary}
+  \caption{Plots for steps, average reward, collisions and loss per episode for 1 green vs 1 red agent. \textit{Left Column}: DQN, \textit{Middle Column}: DDPG, \textit{Right Column}: MADDPG}
   \label{fig:1vs1}
 \end{figure}
 \FloatBarrier
-
 
 In the first row of Figure~\ref{fig:1vs1}, the blue curve shows the number of
 steps for each episode, the black dotted curve shows the running average of
@@ -142,198 +139,188 @@ In the third row of Figure~\ref{fig:1vs1}, the blue and green curves are
 overlapped because the agent and the adversary have the same number of
 collisions.
 
-
-
-\subsection{Two Agents vs. One Adversary Results}
+\subsection{2 Green Agents vs. 1 Red Agent}
 \label{sec:experiment:1vs2}
 
-
-\begin{figure}[h]
-  \centering
-
-  \begin{subfigure}[h]{\figscale\linewidth}
-    \includegraphics[trim=10 10 10 10,clip,width=\linewidth]
+\begin{figure}[t]
+  \vspace*{-2cm}
+  \begin{subfigure}[t]{\figscale\linewidth}
+    \hspace*{-2.75cm}
+    \includegraphics[width=1.5\textwidth]
     {../results/dqn_1vs2/steps.png}
-    \caption{Number of steps per episode over training episode for DQN.}
     \label{fig:dqn-1vs2-steps}
   \end{subfigure}
   ~
-  \begin{subfigure}[h]{\figscale\linewidth}
-    \includegraphics[trim=10 10 10 10,clip,width=\linewidth]
+  \begin{subfigure}[t]{\figscale\linewidth}
+    \hspace*{-1.4cm}
+    \includegraphics[width=1.5\textwidth]
     {../results/ddpg_1vs2/steps.png}
-    \caption{Number of steps per episode over training episode for DDPG.}
     \label{fig:ddpg-1vs2-steps}
   \end{subfigure}
   ~
-  \begin{subfigure}[h]{\figscale\linewidth}
-    \includegraphics[trim=10 10 10 10,clip,width=\linewidth]
+  \begin{subfigure}[t]{\figscale\linewidth}
+    \includegraphics[width=1.5\textwidth]
     {../results/maddpg_1vs2/steps.png}
-    \caption{Number of steps per episode over training episode for MADDPG.}
     \label{fig:maddpg-1vs2-steps}
   \end{subfigure}
 
-  \begin{subfigure}[h]{\figscale\linewidth}
-    \includegraphics[trim=10 10 10 10,clip,width=\linewidth]
+  \vspace{-0.5cm}
+  \begin{subfigure}[t]{\figscale\linewidth}
+    \hspace*{-2.75cm}
+    \includegraphics[width=1.5\textwidth]
     {../results/dqn_1vs2/reward.png}
-    \caption{Cumulative reward per episode over training episode for DQN.}
     \label{fig:dqn-1vs2-reward}
   \end{subfigure}
   ~
-  \begin{subfigure}[h]{\figscale\linewidth}
-    \includegraphics[trim=10 10 10 10,clip,width=\linewidth]
+  \begin{subfigure}[t]{\figscale\linewidth}
+    \hspace*{-1.4cm}
+    \includegraphics[width=1.5\textwidth]
     {../results/ddpg_1vs2/reward.png}
-    \caption{Cumulative reward per episode over training episode for DDPG.}
     \label{fig:ddpg-1vs2-reward}
   \end{subfigure}
   ~
-  \begin{subfigure}[h]{\figscale\linewidth}
-    \includegraphics[trim=10 10 10 10,clip,width=\linewidth]
+  \begin{subfigure}[t]{\figscale\linewidth}
+    \includegraphics[width=1.5\textwidth]
     {../results/maddpg_1vs2/reward.png}
-    \caption{Cumulative reward per episode over training episode for MADDPG.}
     \label{fig:maddpg-1vs2-reward}
   \end{subfigure}
 
-  \begin{subfigure}[h]{\figscale\linewidth}
-    \includegraphics[trim=10 10 10 10,clip,width=\linewidth]
+  \vspace{-0.5cm}
+  \begin{subfigure}[t]{\figscale\linewidth}
+    \hspace*{-2.75cm}
+    \includegraphics[width=1.5\textwidth]
     {../results/dqn_1vs2/collisions.png}
-    \caption{Number of collisions per episode over training episode for DQN.}
     \label{fig:dqn-1vs2-collisions}
   \end{subfigure}
   ~
-  \begin{subfigure}[h]{\figscale\linewidth}
-    \includegraphics[trim=10 10 10 10,clip,width=\linewidth]
+  \begin{subfigure}[t]{\figscale\linewidth}
+    \hspace*{-1.4cm}
+    \includegraphics[width=1.5\textwidth]
     {../results/ddpg_1vs2/collisions.png}
-    \caption{Number of collisions per episode over training episode for DDPG.}
     \label{fig:ddpg-1vs2-collisions}
   \end{subfigure}
   ~
-  \begin{subfigure}[h]{\figscale\linewidth}
-    \includegraphics[trim=10 10 10 10,clip,width=\linewidth]
+  \begin{subfigure}[t]{\figscale\linewidth}
+    \includegraphics[width=1.5\textwidth]
     {../results/maddpg_1vs2/collisions.png}
-    \caption{Number of collisions per episode over training episode for MADDPG.}
     \label{fig:maddpg-1vs2-collisions}
   \end{subfigure}
 
-  \begin{subfigure}[h]{\figscale\linewidth}
-    \includegraphics[trim=10 10 10 10,clip,width=\linewidth]
+  \vspace{-0.5cm}
+  \begin{subfigure}[t]{\figscale\linewidth}
+    \hspace*{-2.75cm}
+    \includegraphics[width=1.5\textwidth]
     {../results/dqn_1vs2/loss.png}
-    \caption{Average loss per episode over training episode for DQN.}
     \label{fig:dqn-1vs2-loss}
   \end{subfigure}
   ~
-  \begin{subfigure}[h]{\figscale\linewidth}
-    \includegraphics[trim=10 10 10 10,clip,width=\linewidth]
+  \begin{subfigure}[t]{\figscale\linewidth}
+    \hspace*{-1.4cm}
+    \includegraphics[width=1.5\textwidth]
     {../results/ddpg_1vs2/loss.png}
-    \caption{Average loss per episode over training episode for DDPG.}
     \label{fig:ddpg-1vs2-loss}
   \end{subfigure}
   ~
-  \begin{subfigure}[h]{\figscale\linewidth}
-    \includegraphics[trim=10 10 10 10,clip,width=\linewidth]
+  \begin{subfigure}[t]{\figscale\linewidth}
+    \includegraphics[width=1.5\textwidth]
     {../results/maddpg_1vs2/loss.png}
-    \caption{Average loss per episode over training episode for MADDPG.}
     \label{fig:maddpg-1vs2-loss}
   \end{subfigure}
 
-
-  \caption{Results for predator-pray with two agents vs. one adversary}
+  \caption{Plots for steps, average reward, collisions and loss per episode for 2 green vs 1 red agent. \textit{Left Column}: DQN, \textit{Middle Column}: DDPG, \textit{Right Column}: MADDPG}
   \label{fig:1vs2}
 \end{figure}
 \FloatBarrier
 
-
-\subsection{One Agent vs. Two Adversaries Results}
+\subsection{1 Green Agent vs. 2 Red Agents}
 \label{sec:experiment:2vs1}
 
-
-\begin{figure}[h]
-  \centering
-
-  \begin{subfigure}[h]{\figscale\linewidth}
-    \includegraphics[trim=10 10 10 10,clip,width=\linewidth]
+\begin{figure}[t]
+  \vspace*{-2cm}
+  \begin{subfigure}[t]{\figscale\linewidth}
+    \hspace*{-2.75cm}
+    \includegraphics[width=1.5\textwidth]
     {../results/dqn_2vs1/steps.png}
-    \caption{Number of steps per episode over training episode for DQN.}
     \label{fig:dqn-2vs1-steps}
   \end{subfigure}
   ~
-  \begin{subfigure}[h]{\figscale\linewidth}
-    \includegraphics[trim=10 10 10 10,clip,width=\linewidth]
+  \begin{subfigure}[t]{\figscale\linewidth}
+    \hspace*{-1.4cm}
+    \includegraphics[width=1.5\textwidth]
     {../results/ddpg_2vs1/steps.png}
-    \caption{Number of steps per episode over training episode for DDPG.}
     \label{fig:ddpg-2vs1-steps}
   \end{subfigure}
   ~
-  \begin{subfigure}[h]{\figscale\linewidth}
-    \includegraphics[trim=10 10 10 10,clip,width=\linewidth]
+  \begin{subfigure}[t]{\figscale\linewidth}
+    \includegraphics[width=1.5\textwidth]
     {../results/maddpg_2vs1/steps.png}
-    \caption{Number of steps per episode over training episode for MADDPG.}
     \label{fig:maddpg-2vs1-steps}
   \end{subfigure}
 
-  \begin{subfigure}[h]{\figscale\linewidth}
-    \includegraphics[trim=10 10 10 10,clip,width=\linewidth]
+  \vspace{-0.5cm}
+  \begin{subfigure}[t]{\figscale\linewidth}
+    \hspace*{-2.75cm}
+    \includegraphics[width=1.5\textwidth]
     {../results/dqn_2vs1/reward.png}
-    \caption{Cumulative reward per episode over training episode for DQN.}
     \label{fig:dqn-2vs1-reward}
   \end{subfigure}
   ~
-  \begin{subfigure}[h]{\figscale\linewidth}
-    \includegraphics[trim=10 10 10 10,clip,width=\linewidth]
+  \begin{subfigure}[t]{\figscale\linewidth}
+    \hspace*{-1.4cm}
+    \includegraphics[width=1.5\textwidth]
     {../results/ddpg_2vs1/reward.png}
-    \caption{Cumulative reward per episode over training episode for DDPG.}
     \label{fig:ddpg-2vs1-reward}
   \end{subfigure}
   ~
-  \begin{subfigure}[h]{\figscale\linewidth}
-    \includegraphics[trim=10 10 10 10,clip,width=\linewidth]
+  \begin{subfigure}[t]{\figscale\linewidth}
+    \includegraphics[width=1.5\textwidth]
     {../results/maddpg_2vs1/reward.png}
-    \caption{Cumulative reward per episode over training episode for MADDPG.}
     \label{fig:maddpg-2vs1-reward}
   \end{subfigure}
 
-  \begin{subfigure}[h]{\figscale\linewidth}
-    \includegraphics[trim=10 10 10 10,clip,width=\linewidth]
+  \vspace{-0.5cm}
+  \begin{subfigure}[t]{\figscale\linewidth}
+    \hspace*{-2.75cm}
+    \includegraphics[width=1.5\textwidth]
     {../results/dqn_2vs1/collisions.png}
-    \caption{Number of collisions per episode over training episode for DQN.}
     \label{fig:dqn-2vs1-collisions}
   \end{subfigure}
   ~
-  \begin{subfigure}[h]{\figscale\linewidth}
-    \includegraphics[trim=10 10 10 10,clip,width=\linewidth]
+  \begin{subfigure}[t]{\figscale\linewidth}
+    \hspace*{-1.4cm}
+    \includegraphics[width=1.5\textwidth]
     {../results/ddpg_2vs1/collisions.png}
-    \caption{Number of collisions per episode over training episode for DDPG.}
     \label{fig:ddpg-2vs1-collisions}
   \end{subfigure}
   ~
-  \begin{subfigure}[h]{\figscale\linewidth}
-    \includegraphics[trim=10 10 10 10,clip,width=\linewidth]
+  \begin{subfigure}[t]{\figscale\linewidth}
+    \includegraphics[width=1.5\textwidth]
     {../results/maddpg_2vs1/collisions.png}
-    \caption{Number of collisions per episode over training episode for MADDPG.}
     \label{fig:maddpg-2vs1-collisions}
   \end{subfigure}
 
-  \begin{subfigure}[h]{\figscale\linewidth}
-    \includegraphics[trim=10 10 10 10,clip,width=\linewidth]
+  \vspace{-0.5cm}
+  \begin{subfigure}[t]{\figscale\linewidth}
+    \hspace*{-2.75cm}
+    \includegraphics[width=1.5\textwidth]
     {../results/dqn_2vs1/loss.png}
-    \caption{Average loss per episode over training episode for DQN.}
     \label{fig:dqn-2vs1-loss}
   \end{subfigure}
   ~
-  \begin{subfigure}[h]{\figscale\linewidth}
-    \includegraphics[trim=10 10 10 10,clip,width=\linewidth]
+  \begin{subfigure}[t]{\figscale\linewidth}
+    \hspace*{-1.4cm}
+    \includegraphics[width=1.5\textwidth]
     {../results/ddpg_2vs1/loss.png}
-    \caption{Average loss per episode over training episode for DDPG.}
     \label{fig:ddpg-2vs1-loss}
   \end{subfigure}
   ~
-  \begin{subfigure}[h]{\figscale\linewidth}
-    \includegraphics[trim=10 10 10 10,clip,width=\linewidth]
+  \begin{subfigure}[t]{\figscale\linewidth}
+    \includegraphics[width=1.5\textwidth]
     {../results/maddpg_2vs1/loss.png}
-    \caption{Average loss per episode over training episode for MADDPG.}
     \label{fig:maddpg-2vs1-loss}
   \end{subfigure}
-  \caption{Results for predator-pray with one agent vs. two adversaries}
+
+  \caption{Plots for steps, average reward, collisions and loss per episode for 1 green vs 2 red agents. \textit{Left Column}: DQN, \textit{Middle Column}: DDPG, \textit{Right Column}: MADDPG}
   \label{fig:2vs1}
 \end{figure}
 \FloatBarrier
-

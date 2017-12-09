@@ -41,7 +41,7 @@ DDPG is an actor critic method that adapts the underyling success of Deep Q-lear
 
 where $\mu_{\theta}: S \rightarrow A$ are deterministic policies. DDPG approximates both the policy $\mu$ and the critic $Q^{\mu}$ with deep neural networks, sampling trajectories from a replay buffer of experiences and using a target network as in DQN. Note that in the multi-agent setting, each agent is trained individually with DDPG, there is no combined optimization of the agents. However, the MADDPG algorithm, explained in the next section, naturally extends DDPG to the multi-agent setting during training, potentially resulting in much richer behavior between agents.
 
-\subsubsection{Multi Agent Deep Deterministic Policy Gradient (MADDPG)}
+\subsubsection{Multi-Agent Deep Deterministic Policy Gradient (MADDPG)}
 MADDPG is a recently developed general-purpose multi-agent learning algorithm that is a simple extension of actor-critic policy gradient methods (specifically DDPG) where the critic is augmented with extra information about the policies of other 
 agents while the actor only has access to local information (i.e., its own observations). In this framework of centralized training with decentralized execution, agents don’t need to access the central critic at test time; they learn approximate models of other agents and effectively use them in their own policy learning procedure. Furthermore, since the centralized critic is
 learned independently for each agent, this approach can be used to model arbitrary reward structures between agents, including adversarial cases where the rewards are opposing.
