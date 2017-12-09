@@ -13,7 +13,7 @@ In the 1 green agent vs 1 red agent scenario, we expect our reinforcement learni
 From Figure~\ref{fig:1vs1}, we observe that the average number of steps (i.e., how long each episode lasts) increases over time for all models, confirming that the agents learn not to go outside the arena. If the rewards for collisions and stepping outside the arena are ignored, then this scenario is zero sum. This is confirmed by the rewards vs episodes plots which suggest that the sum of the average rewards for both agents is close to zero for all models. For the DQN agents, we notice that the average number of collisions decreases over episodes. However, the collisions and average loss plots suggest that unlike the DQN agents, the DDPG and MADDPG agents have not yet formulated stable policies.
 
 \begin{figure}[t]
-  \vspace*{-2cm}
+  \vspace*{-2.25cm}
   \begin{subfigure}[t]{\figscale\linewidth}
     \hspace*{-2.75cm}
     \includegraphics[width=1.5\textwidth]
@@ -34,7 +34,7 @@ From Figure~\ref{fig:1vs1}, we observe that the average number of steps (i.e., h
     \label{fig:maddpg-1vs1-steps}
   \end{subfigure}
 
-  \vspace{-0.5cm}
+  \vspace{-0.6cm}
   \begin{subfigure}[t]{\figscale\linewidth}
     \hspace*{-2.75cm}
     \includegraphics[width=1.5\textwidth]
@@ -55,7 +55,7 @@ From Figure~\ref{fig:1vs1}, we observe that the average number of steps (i.e., h
     \label{fig:maddpg-1vs1-reward}
   \end{subfigure}
 
-  \vspace{-0.5cm}
+  \vspace{-0.6cm}
   \begin{subfigure}[t]{\figscale\linewidth}
     \hspace*{-2.75cm}
     \includegraphics[width=1.5\textwidth]
@@ -76,7 +76,7 @@ From Figure~\ref{fig:1vs1}, we observe that the average number of steps (i.e., h
     \label{fig:maddpg-1vs1-collisions}
   \end{subfigure}
 
-  \vspace{-0.5cm}
+  \vspace{-0.6cm}
   \begin{subfigure}[t]{\figscale\linewidth}
     \hspace*{-2.75cm}
     \includegraphics[width=1.5\textwidth]
@@ -102,11 +102,8 @@ From Figure~\ref{fig:1vs1}, we observe that the average number of steps (i.e., h
 \end{figure}
 \FloatBarrier
 
-\subsection{2 Green Agents vs. 1 Red Agent}
-\label{sec:experiment:1vs2}
-
 \begin{figure}[t]
-  \vspace*{-2cm}
+  \vspace*{-2.25cm}
   \begin{subfigure}[t]{\figscale\linewidth}
     \hspace*{-2.75cm}
     \includegraphics[width=1.5\textwidth]
@@ -127,7 +124,7 @@ From Figure~\ref{fig:1vs1}, we observe that the average number of steps (i.e., h
     \label{fig:maddpg-1vs2-steps}
   \end{subfigure}
 
-  \vspace{-0.5cm}
+  \vspace{-0.6cm}
   \begin{subfigure}[t]{\figscale\linewidth}
     \hspace*{-2.75cm}
     \includegraphics[width=1.5\textwidth]
@@ -148,7 +145,7 @@ From Figure~\ref{fig:1vs1}, we observe that the average number of steps (i.e., h
     \label{fig:maddpg-1vs2-reward}
   \end{subfigure}
 
-  \vspace{-0.5cm}
+  \vspace{-0.6cm}
   \begin{subfigure}[t]{\figscale\linewidth}
     \hspace*{-2.75cm}
     \includegraphics[width=1.5\textwidth]
@@ -169,7 +166,7 @@ From Figure~\ref{fig:1vs1}, we observe that the average number of steps (i.e., h
     \label{fig:maddpg-1vs2-collisions}
   \end{subfigure}
 
-  \vspace{-0.5cm}
+  \vspace{-0.6cm}
   \begin{subfigure}[t]{\figscale\linewidth}
     \hspace*{-2.75cm}
     \includegraphics[width=1.5\textwidth]
@@ -195,11 +192,13 @@ From Figure~\ref{fig:1vs1}, we observe that the average number of steps (i.e., h
 \end{figure}
 \FloatBarrier
 
-\subsection{1 Green Agent vs. 2 Red Agents}
-\label{sec:experiment:2vs1}
+\subsection{2 Green Agents vs. 1 Red Agent}
+\label{sec:experiment:1vs2}
+
+Unlike the previous scenario, we expect the 2 green agents to now form cooperative strategies against the red agent. This is in fact noticeable in our videos[\url{https://github.com/camellyx/10707-deep-learning-project}] - green agents stay close together when the red agent is far away from them, and move in opposite directions when the red agent gets close to them. More complex and intelligent behaviours can be noticed in Figure~\ref{Figure 1}, where several green agents either group together or enter into a circle configuration based on the red agent's location. The commentary for Figure~\ref{fig:1vs2} is similar to that for Figure~\ref{fig:1vs1}.
 
 \begin{figure}[t]
-  \vspace*{-2cm}
+  \vspace*{-2.25cm}
   \begin{subfigure}[t]{\figscale\linewidth}
     \hspace*{-2.75cm}
     \includegraphics[width=1.5\textwidth]
@@ -220,7 +219,7 @@ From Figure~\ref{fig:1vs1}, we observe that the average number of steps (i.e., h
     \label{fig:maddpg-2vs1-steps}
   \end{subfigure}
 
-  \vspace{-0.5cm}
+  \vspace{-0.6cm}
   \begin{subfigure}[t]{\figscale\linewidth}
     \hspace*{-2.75cm}
     \includegraphics[width=1.5\textwidth]
@@ -241,7 +240,7 @@ From Figure~\ref{fig:1vs1}, we observe that the average number of steps (i.e., h
     \label{fig:maddpg-2vs1-reward}
   \end{subfigure}
 
-  \vspace{-0.5cm}
+  \vspace{-0.6cm}
   \begin{subfigure}[t]{\figscale\linewidth}
     \hspace*{-2.75cm}
     \includegraphics[width=1.5\textwidth]
@@ -262,7 +261,7 @@ From Figure~\ref{fig:1vs1}, we observe that the average number of steps (i.e., h
     \label{fig:maddpg-2vs1-collisions}
   \end{subfigure}
 
-  \vspace{-0.5cm}
+  \vspace{-0.6cm}
   \begin{subfigure}[t]{\figscale\linewidth}
     \hspace*{-2.75cm}
     \includegraphics[width=1.5\textwidth]
@@ -287,3 +286,14 @@ From Figure~\ref{fig:1vs1}, we observe that the average number of steps (i.e., h
   \label{fig:2vs1}
 \end{figure}
 \FloatBarrier
+
+\subsection{1 Green Agent vs. 2 Red Agents}
+\label{sec:experiment:2vs1}
+
+This time, red agents form cooperative strategies against the green agent. Our videos highlight how red agents corner the green agent by entering into a triangular configuration with it. Once they are close to the green agent, the closer red agent attacks first, while its partner waits directly behind it to intercept the green agent if it escapes [See Figure~\ref{Figure 5}]. We noticed interesting strategies develop with all 3 deep reinforcement learning models in all scenarios, however, DDPG and MADDPG agents jittered a lot more than DQN agents (possibly due to non stable policies during learning). 
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=\textwidth]{redstrategy}
+	\caption{Two red agents forming a cooperative strategy to chase the green agent}\label{Figure 5}
+\end{figure}
