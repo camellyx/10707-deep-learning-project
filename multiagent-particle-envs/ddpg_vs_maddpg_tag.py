@@ -52,9 +52,6 @@ def play(episodes, is_render, is_testing, checkpoint_interval,
             # act
             actions = []
             for i in range(env.n):
-                print("i", i)
-                print(actors_noise[i])
-                print(states[i])
                 action = np.clip(
                     actors[i].choose_action(states[i]) + actors_noise[i](), -2, 2)
                 actions.append(action)
