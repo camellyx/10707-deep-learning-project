@@ -7,6 +7,15 @@
 \subsection{One Agent vs. One Adversary Results}
 \label{sec:experiment:1vs1}
 
+Figure~\ref{fig:1vs1} plots our results for the predator-pray scenario with one
+agent and one adversary. The first row of this figure shows the number of steps
+per episode. The second row shows the cumulative reward per episode. The third
+row shows the number of collisions per episode. The fourth row shows the
+average loss per episode. The first column of Figure~\ref{fig:1vs1} shows the
+results for DQN model. The second column shows the results for DDPG model. The
+third column shows the results for MADDPG model. The x-axis of each figure is
+always number of training episodes. We next analyze these results in turn.
+
 
 \begin{figure}[h]
   \centering
@@ -100,6 +109,19 @@
   \label{fig:1vs1}
 \end{figure}
 \FloatBarrier
+
+
+In the first row of Figure~\ref{fig:1vs1}, the blue curve shows the number of
+steps for each episode, the black dotted curve shows the running average of
+steps per episode with a window size of 50. Note the different y-axis scales
+used in different figures. First, we observe that the MADDPG model achieves the
+highest peak steps per episode of the three models (i.e., highest steps of
+around 5000 achieved at around 55,000 episodes). Second, we find that DQN
+achieves the highest average steps per episode of around 300. This shows that
+DQN model based agent is has a more stable performance than the other two
+models.
+
+
 
 
 \subsection{Two Agents vs. One Adversary Results}
