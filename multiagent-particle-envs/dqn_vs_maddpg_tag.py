@@ -89,7 +89,7 @@ def play(episodes, is_render, is_testing, checkpoint_interval,
                             episode_losses[i] = -1
                     else:
                         if memories[i].pointer > batch_size * 10:
-                            s, a, r, sn, _ = memories[i].sample(batch)
+                            s, a, r, sn, _ = memories[i].sample(batch, env.n)
                             r = np.reshape(r, (batch_size, 1))
                             loss = critics[i].learn(s, a, r, sn)
                             actors[i].learn(actors, s)
@@ -257,6 +257,9 @@ if __name__ == '__main__':
     # General agent data
     n_actions = [env.action_space[i].n for i in range(env.n)]
     state_sizes = [env.observation_space[i].shape[0] for i in range(env.n)]
+    print("n_actions", n_actions)
+    print("state_sizes", state_sizes)
+    print("network types", ["dqn" if i < h else "maddpg" for i in range(env.n)])
 
     # init DQNs
     dqn_memories = [Memory(args.memory_size) for i in range(h)]
@@ -270,10 +273,13 @@ if __name__ == '__main__':
     maddpg_actors = []
     maddpg_actors_noise = []
     maddpg_memories = []
-    maddpg_eval_actions = []
-    maddpg_target_actions = []
-    maddpg_state_placeholders = []
-    maddpg_state_next_placeholders = []
+
+    # TODO How to integrate with q learning?
+    maddpg_eval_actions = [] # [dqn.eval_network for dqn in dqns]
+    maddpg_target_actions = [] #[dqn.target_network for dqn in dqns]
+    maddpg_state_placeholders = [tf.placeholder(tf.float32, shape=[None, state_sizes[i]]) for i in range(h)]
+    maddpg_state_next_placeholders = [tf.placeholder(tf.float32, shape=[None, state_sizes[i]]) for i in range(h)]
+
     maddpg_critics = []
     for i in range(h, env.n-h+1):
         state = tf.placeholder(tf.float32, shape=[None, state_sizes[i]])
@@ -296,6 +302,7 @@ if __name__ == '__main__':
         maddpg_state_placeholders.append(state)
         maddpg_state_next_placeholders.append(state_next)
 
+    for i in range(h, env.n-h+1):
         # Critic
         reward = tf.placeholder(tf.float32, [None, 1])
         maddpg_critics.append(maddpg.Critic('critic' + str(i), session, n_actions,
